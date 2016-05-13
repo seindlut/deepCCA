@@ -299,10 +299,9 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
     train_set_y_unlab=T.cast(train_set_y_unlab, 'int32')
 
     # compute number of minibatches for training, validation and testing
-    n_train_batches = train_set_y_lab.eval().s   mail -s "push failed" maha.elbayad@gmail.com <<<
-   exit 1
-fi
-().shape[0]
+    n_train_batches = train_set_y_lab.eval().shape[0]
+    n_train_batches /= batch_size
+    n_train_batches_u = train_set_y_unlab.eval().shape[0]
     n_train_batches_u /= batch_size
 
     # numpy random generator
