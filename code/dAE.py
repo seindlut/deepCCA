@@ -375,7 +375,7 @@ class dAE_nobias(object):
     def mse(self):
         return T.mean((self.z-self.x)**2)
 
-def test_dAE(learning_rate=0.05, training_epochs=2, dataset='full', batch_size=14, output_folder='models/dae'):
+def test_dAE(learning_rate=0.05, training_epochs=100, dataset='full', batch_size=36, output_folder='models/dae'):
 
     """
     This demo is tested on MNIST
