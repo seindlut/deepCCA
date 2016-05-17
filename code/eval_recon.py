@@ -26,7 +26,7 @@ test_da = theano.function(
     [index],
     da_recon(x, corruption_level = .0),
     givens={
-        x: test_set_x[index]
+        x: test_set_x.get_value[index]
     }
 )
 
