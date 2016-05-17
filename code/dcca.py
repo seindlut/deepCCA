@@ -238,8 +238,8 @@ class CCALayer(HiddenLayer):
             else self.activation(lin_output)
         )
 
-        ##self.params = [self.W, self.b]
-        self.params = [self.W]
+        self.params = [self.W, self.b]
+        # self.params = [self.W]
 
     def correlation(self, H1, H2):
         #H1 = self.output.T
@@ -733,9 +733,9 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
         grad_E_to_o = (1.0/8) * (2*Delta11*net1.lastLayer.H1bar+Delta12*net1.lastLayer.H2bar)
         gparam1_W = (grad_E_to_o) * (net1.lastLayer.output*(1-net1.lastLayer.output)) * (net1.hiddenLayer.output)
         gparam1_b = (grad_E_to_o) * (net1.lastLayer.output*(1-net1.lastLayer.output)) * theano.shared(numpy.array([1.0],dtype=theano.config.floatX), borrow=True)
-        #gparams1 = [T.grad(cost1, param) for param in net1.params]
-        #gparams1 = [T.grad(cost1, param) for param in net1.hiddenLayer.params]
-        gparams1 =[]
+        # gparams1 = [T.grad(cost1, param) for param in net1.params]
+        gparams1 = [T.grad(cost1, param) for param in net1.hiddenLayer.params]
+        # gparams1 =[]
         gparams1.append(gparam1_W)
         gparams1.append(gparam1_b)
     if 1: # grad compute for net2
@@ -747,9 +747,9 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
         grad_E_to_o = (1.0/8) * (2*Delta11*net2.lastLayer.H1bar+Delta12*net2.lastLayer.H2bar)
         gparam2_W = (grad_E_to_o) * (net2.lastLayer.output*(1-net2.lastLayer.output)) * (net2.hiddenLayer.output)
         gparam2_b = (grad_E_to_o) * (net2.lastLayer.output*(1-net2.lastLayer.output)) * 1
-        #gparams1 = [T.grad(cost1, param) for param in net1.params]
-        # gparams2 = [T.grad(cost2, param) for param in net2.hiddenLayer.params]
-        gparams2 =[]
+        #gparams1 = [T.grad(cost2, param) for param in net2.params]
+        gparams2 = [T.grad(cost2, param) for param in net2.hiddenLayer.params]
+        # gparams2 =[]
         gparams2.append(gparam2_W)
         gparams2.append(gparam2_b)
 
@@ -1001,4 +1001,4 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
     return rval
 
 if __name__ == '__main__':
-    test_dcca()
+    test_dcca_old()
