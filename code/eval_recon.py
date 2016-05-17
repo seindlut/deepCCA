@@ -10,9 +10,7 @@ from six.moves import cPickle
 
 datasets = load_data('mnist.pkl.gz')
 test_set_x, test_set_y = datasets[1]
-SET = test_set_x.get_value(borrow=True)
-print SET[0,:]
-print 'Shape :', SET.shape
+
 with open('models/dae/dAE_mnist_full.pkl', 'rb') as input:
     da = cPickle.load(input)
 
@@ -24,13 +22,12 @@ def da_recon(input, corruption_level):
     return z
 
 test_da = theano.function(
-    [],
+    [index],
     da_recon(x, corruption_level = .0),
     givens={
-        x: SET[0,:]
+        x: test_set_x[index:index+1]
     }
 )
 
 z = test_da(0)
-print 'Input: ', test_set_x[0]
-print 'Recon: ',z
+print z
