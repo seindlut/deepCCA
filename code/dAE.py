@@ -40,9 +40,9 @@ from theano.tensor.shared_randomstreams import RandomStreams
 from logistic_sgd import load_data
 import pickle
 from PIL import Image
-import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.style.use('ggplot')
+# import matplotlib.pyplot as plt
+# import matplotlib
+# matplotlib.style.use('ggplot')
 
 
 def Trelu(x): #-----------------------------------------Activation function
@@ -475,13 +475,16 @@ def test_dAE(learning_rate=0.05, training_epochs=3, dataset='full', batch_size=6
     with open(output_folder+'/dAE_mnist_'+dataset+'.pkl', 'wb') as output:
         pickle.dump(da, output, pickle.HIGHEST_PROTOCOL)
 
-    plt.figure(figsize=(6,4))
-    plt.plot(range(len(mse_log)), mse_log)
-    plt.xlabel('Epoch')
-    plt.ylabel('MSE reconstruction')
-    plt.title('Deep Autoencoder (1 hidden layer)')
-    plt.savefig(output_folder+'/MSE_dae.png')
-    plt.show()
+    with open(output_folder+'/dAE_mnist_log.pkl', 'wb') as output:
+        pickle.dump(mse_log, output, pickle.HIGHEST_PROTOCOL)
+
+    # plt.figure(figsize=(6,4))
+    # plt.plot(range(len(mse_log)), mse_log)
+    # plt.xlabel('Epoch')
+    # plt.ylabel('MSE reconstruction')
+    # plt.title('Deep Autoencoder (1 hidden layer)')
+    # plt.savefig(output_folder+'/MSE_dae.png')
+    # plt.show()
     #-------------------------------------------------
     # BUILDING THE CORRUPTED MODEL W/ BIAS
     #-------------------------------------------------
@@ -544,13 +547,17 @@ def test_dAE(learning_rate=0.05, training_epochs=3, dataset='full', batch_size=6
     # Save the model for later use:
     with open(output_folder+'/dAE_mnist_corrupted_'+dataset+'.pkl', 'wb') as output:
         pickle.dump(da, output, pickle.HIGHEST_PROTOCOL)
-    plt.figure(figsize=(6,4))
-    plt.plot(range(len(mse_log)), mse_log)
-    plt.xlabel('Epoch')
-    plt.ylabel('MSE reconstruction')
-    plt.title('Deep Denoising Autoencoder (1 hidden layer)')
-    plt.savefig(output_folder+'/MSE_dae_corr30.png')
-    plt.show()
+
+    with open(output_folder+'/dAE_mnist_corr30_log.pkl', 'wb') as output:
+        pickle.dump(mse_log, output, pickle.HIGHEST_PROTOCOL)
+
+    # plt.figure(figsize=(6,4))
+    # plt.plot(range(len(mse_log)), mse_log)
+    # plt.xlabel('Epoch')
+    # plt.ylabel('MSE reconstruction')
+    # plt.title('Deep Denoising Autoencoder (1 hidden layer)')
+    # plt.savefig(output_folder+'/MSE_dae_corr30.png')
+    # plt.show()
 
 
 

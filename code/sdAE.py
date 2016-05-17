@@ -332,7 +332,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
     ## Pre-train layer-wise
     corruption_levels = [0.1, 0.2, 0.3]
     mse_layer = {}
-    plt.figure(figsize=(6,4))
+    # plt.figure(figsize=(6,4))
     for i in xrange(sda.n_layers):
         mse_layer{i} = []
         # go through pretraining epochs
@@ -346,9 +346,12 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
             print 'Pre-training layer %i, epoch %d, cost ' % (i, epoch),
             print numpy.mean(c)
             mse_layer{i}.append(numpy.mean(c))
-        plt.plot(range(len(pretraining_epochs),mse_layer{i})
-    plt.savefig(output_folder+'sda_pretraining.png')
-    plt.show()
+        # plt.plot(range(len(pretraining_epochs),mse_layer{i})
+    with open(output_folder+'/SdAE_mnist_pre_log.pkl', 'wb') as output:
+        pickle.dump(mse_layer, output, pickle.HIGHEST_PROTOCOL)
+
+    # plt.savefig(output_folder+'sda_pretraining.png')
+    # plt.show()
 
     end_time = time.clock()
 
