@@ -2,7 +2,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 from logistic_sgd import load_data
-from dAE import dAE_nobias
+from dAE import dAE_nobias, dAE
 from six.moves import cPickle
 
 
@@ -11,7 +11,7 @@ from six.moves import cPickle
 datasets = load_data('mnist.pkl.gz')
 test_set_x, test_set_y = datasets[1]
 
-with open('models/dae/dAE_mnist_corruptd_full.pkl', 'rb') as input:
+with open('models/dae/dAE_mnist_corrupted_full.pkl', 'rb') as input:
     da = cPickle.load(input)
 
 index = T.lscalar()
