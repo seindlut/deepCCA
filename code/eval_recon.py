@@ -14,7 +14,7 @@ test_set_x, test_set_y = datasets[1]
 with open('models/dae/dAE_mnist_full.pkl', 'rb') as input:
     da = pickle.load(input)
 
-
+index = T.lscalar() 
 x = T.matrix('x')
 def da_recon(da, corruption_level):
     tilde_x = da.get_corrupted_input(da.x, corruption_level)
