@@ -12,7 +12,7 @@ from dAE import dAE
 from mlp import MLP
 from utils import tile_raster_images,plot_weights
 from PIL import Image
-from siw.moves import cPickle
+from six.moves import cPickle
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.style.use('ggplot')
