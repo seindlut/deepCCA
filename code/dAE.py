@@ -38,7 +38,8 @@ import theano
 import theano.tensor as T
 from theano.tensor.shared_randomstreams import RandomStreams
 from logistic_sgd import load_data
-import pickle
+# import pickle
+from six.moves import cPickle
 from PIL import Image
 
 
@@ -492,12 +493,12 @@ def test_dAE(learning_rate=0.05, training_epochs=50, dataset='full', batch_size=
                            tile_spacing=(1, 1)))
     image.save(output_folder+'/filters_corruption_0.png')
     with open(output_folder+'/dAE_mnist_'+dataset+'.pkl', 'wb') as output:
-        pickle.dump(da, output, pickle.HIGHEST_PROTOCOL)
+        cPickle.dump(da, output, cPickle.HIGHEST_PROTOCOL)
 
     with open(output_folder+'/dAE_mnist_log.pkl', 'wb') as output:
-        pickle.dump(mse_log, output, pickle.HIGHEST_PROTOCOL)
+        cPickle.dump(mse_log, output, cPickle.HIGHEST_PROTOCOL)
     with open(output_folder+'/dAE_mnist_test_log.pkl', 'wb') as output:
-        pickle.dump(mse_test_log, output, pickle.HIGHEST_PROTOCOL)
+        cPickle.dump(mse_test_log, output, cPickle.HIGHEST_PROTOCOL)
 
 
     #-------------------------------------------------
@@ -570,13 +571,13 @@ def test_dAE(learning_rate=0.05, training_epochs=50, dataset='full', batch_size=
 
     # Save the model for later use:
     with open(output_folder+'/dAE_mnist_corrupted_'+dataset+'.pkl', 'wb') as output:
-        pickle.dump(da, output, pickle.HIGHEST_PROTOCOL)
+        cPickle.dump(da, output, cPickle.HIGHEST_PROTOCOL)
 
     with open(output_folder+'/dAE_mnist_corr30_log.pkl', 'wb') as output:
-        pickle.dump(mse_log, output, pickle.HIGHEST_PROTOCOL)
+        cPickle.dump(mse_log, output, cPickle.HIGHEST_PROTOCOL)
 
     with open(output_folder+'/dAE_mnist_test_corr30_log.pkl', 'wb') as output:
-        pickle.dump(mse_test_log, output, pickle.HIGHEST_PROTOCOL)
+        cPickle.dump(mse_test_log, output, cPickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':
