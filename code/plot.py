@@ -102,7 +102,8 @@ with open('models/sdae/SdAE_test_recon-pretrain.pkl', 'rb') as input:
     Q = cPickle.load(input)
 
 z = Q[0,:].reshape((28,28))*255
-x = SSET[0,:].reshape((28,28))*255
+x = SET[0,:].reshape((28,28))*255
+np.mean(z-x)
 recon = Image.fromarray(z)
 original = Image.fromarray(x)
 np.mean(z-x)
