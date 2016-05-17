@@ -141,7 +141,7 @@ class dAE(object):
             theano_rng = RandomStreams(numpy_rng.randint(2 ** 30))
 
         # note : W' was written as `W_prime` and b' as `b_prime`
-        if not W:# ------------------------------------------------------------------------------------ Random initialization
+        if not W:# ---------------------------------------------------------- Random initialization
             # W is initialized with `initial_W` which is uniformely sampled
             # from -4*sqrt(6./(n_visible+n_hidden)) and
             # 4*sqrt(6./(n_hidden+n_visible))the output of uniform if
@@ -375,7 +375,7 @@ class dAE_nobias(object):
     def mse(self):
         return T.mean((self.z-self.x)**2)
 
-def test_dAE(learning_rate=0.05, training_epochs=3, dataset='full', batch_size=64, output_folder='models/dae'):
+def test_dAE(learning_rate=0.05, training_epochs=50, dataset='full', batch_size=64, output_folder='models/dae'):
 
     """
     This demo is tested on MNIST
