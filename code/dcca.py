@@ -833,8 +833,10 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
             gparam1_b = theano.shared(gparam1_b[0,:], borrow=True)
 
             #gparams1 = [T.grad(cost1, param) for param in net1.params]
-            gparams1 = [T.grad(cost1, param) for param in net1.hiddenLayer.params]
+            # gparams1 = [T.grad(cost1, param) for param in net1.hiddenLayer.params]
+            gparams1 = []
             gparams1.append(gparam1_W)
+            gparams1.append(gparam1_b)
             updates1 = [
                 (param, param - learning_rate * gparam)
                 for param, gparam in zip(net1.params, gparams1)
@@ -856,8 +858,10 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
             gparam2_b = theano.shared(gparam2_b[0,:], borrow=True)
 
             #gparams1 = [T.grad(cost1, param) for param in net1.params]
-            gparams2 = [T.grad(cost2, param) for param in net2.hiddenLayer.params]
+            # gparams2 = [T.grad(cost2, param) for param in net2.hiddenLayer.params]
+            gparams2 = []
             gparams2.append(gparam2_W)
+            gparams2.append(gparam2_b)
             updates2 = [
                 (param, param - learning_rate * gparam)
                 for param, gparam in zip(net2.params, gparams2)
