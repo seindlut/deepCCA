@@ -14,7 +14,9 @@ test_set_x, test_set_y = datasets[1]
 with open('models/dae/dAE_mnist_full.pkl', 'rb') as input:
     da = cPickle.load(input)
 
+index = T.lscalar()
 x = T.matrix('x')
+
 def da_recon(input, corruption_level):
     tilde_x = da.get_corrupted_input(input, corruption_level)
     y = da.get_hidden_values(tilde_x)
