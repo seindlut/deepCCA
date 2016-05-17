@@ -317,7 +317,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
     sda = SdAE(
         numpy_rng=numpy_rng,
         n_ins=28 * 28,
-        hidden_layers_sizes=[100],
+        hidden_layers_sizes=[500, 500],
         n_outs=10
     )
 
@@ -341,7 +341,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
             c = []
             for batch_index in xrange(n_train_batches):
                 c.append(pretraining_fns[i](index=batch_index,
-                         corruption=corruption_levels[i],##$
+                         corruption=corruption_levels[i],
                          lr=pretrain_lr))
             print 'Pre-training layer %i, epoch %d, cost ' % (i, epoch),
             print numpy.mean(c)
@@ -376,65 +376,6 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
                            tile_spacing=(1, 1)))
     image.save(output_folder+'/filters_corruption_01_02_03.png')
 
-    ########################
-    # FINETUNING THE MODEL FOR REGRESSION #
-    if 1 : # pretrain middle layer
-        print '... pre-training MIDDLE layer'
-
-        h1 = T.matrix('x')  # the data is presented as rasterized images
-        h2 = T.matrix('y')  # the labels are presented as 1D vector of
-        log_reg = HiddenLayer(numpy_rng, h1, hidden_layer_size, hidden_layer_size)
-
-        if 1: # for middle layer
-            learning_rate = 0.05
-            fprop_inp = theano.function(
-                [],
-                SdA_inp.sigmoid_layers[-1].output,
-                givens={
-                    SdA_inp.sigmoid_layers[0].input: train_set_x
-                },
-                name='fprop_inp'
-            )
-            fprop_out = theano.function(
-                [],
-                SdA_out.sigmoid_layers[-1].output,
-                givens={
-                    SdA_out.sigmoid_layers[0].input: train_set_y
-                },
-                name='fprop_out'
-            )
-            H11=fprop_inp()
-            H21=fprop_out()
-            H1=N1.predict(train_set_x.eval())
-            H2=N2.predict(train_set_y.eval())
-
-            H1=theano.shared(H1)
-            H2=theano.shared(H2)
-            # compute the gradients with respect to the model parameters
-            logreg_cost = log_reg.mse(h2)
-
-            gparams = T.grad(logreg_cost, log_reg.params)
-
-            # compute list of fine-tuning updates
-            updates = [
-                (param, param - gparam * learning_rate)
-                for param, gparam in zip(log_reg.params, gparams)
-            ]
-
-            train_fn_middle = theano.function(
-                inputs=[],
-                outputs=logreg_cost,
-                updates=updates,
-                givens={
-                    h1: H1,
-                    h2: H2
-                },
-                name='train_middle'
-            )
-        epoch = 0
-        while epoch < 10:
-            print epoch, train_fn_middle()
-            epoch += 1
 
     # Build an MLP from the pretrained DAE
     net = MLP(numpy_rng, train_set_x_lab, 28*14, hidden_layer_size, 28*14, W1=sda.dA_layers[0].W, b1=sda.dA_layers[0].b, W2=None, b2=None) #FIXME Change to 28x28
