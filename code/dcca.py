@@ -157,6 +157,8 @@ class CCALayer(HiddenLayer):
         Tval = numpy.dot(mat_pow(SigmaHat11), numpy.dot(SigmaHat12, mat_pow(SigmaHat22)))
 
         corr =  numpy.trace(numpy.dot(Tval.T, Tval))**(0.5)
+        return corr, Tval
+
 
 def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
              dataset='mnist.pkl.gz', batch_size=20, n_hidden=500):
@@ -215,7 +217,7 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
     )
 
 
-    # -------------------------------------------- Forward propagation
+    # -------------------------------------------- Forward propagation funcions
     fprop_model1 = theano.function(
         inputs=[],
         outputs=(net1.hiddenLayer.output, net1.output),
@@ -231,49 +233,39 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
         }
     )
 
-    # The gradients wrt the CCAlayer parametres (W & b)
-    if 1: # grad compute for net1 in theano
-        U, V, D = theano.tensor.nlinalg.svd(net1.lastLayer.Tval)
+    # -------------------------------------- Backpropagation
+
+
+    def compute_grad(net):
+        m = 10000
+        U, V, D = theano.tensor.nlinalg.svd(net.lastLayer.Tval)
         UVT = T.dot(U, V.T)
-        Delta12 = T.dot(net1.lastLayer.SigmaHat11**(-0.5), T.dot(UVT, net1.lastLayer.SigmaHat22**(-0.5)))
+        Delta12 = T.dot(net.lastLayer.SigmaHat11**(-0.5), T.dot(UVT, net.lastLayer.SigmaHat22**(-0.5)))
         UDUT = T.dot(U, T.dot(D, U.T))
-        Delta11 = (-0.5) * T.dot(net1.lastLayer.SigmaHat11**(-0.5), T.dot(UDUT, net1.lastLayer.SigmaHat22**(-0.5)))
-        grad_E_to_o = (1.0/8) * (2*Delta11*net1.lastLayer.H1bar+Delta12*net1.lastLayer.H2bar)
-        gparam1_W = (grad_E_to_o) * (net1.lastLayer.output*(1-net1.lastLayer.output)) * (net1.hiddenLayer.output)
-        gparam1_b = (grad_E_to_o) * (net1.lastLayer.output*(1-net1.lastLayer.output)) * theano.shared(numpy.array([1.0],dtype=theano.config.floatX), borrow=True)
+        Delta11 = (-0.5) * T.dot(net.lastLayer.SigmaHat11**(-0.5), T.dot(UDUT, net.lastLayer.SigmaHat22**(-0.5)))
+        grad_E_to_o = (1.0/(m-1)) * (2*Delta11*net.lastLayer.H1bar+Delta12*net.lastLayer.H2bar)
 
-        # gparams1 = [T.grad(cost1, param) for param in net1.params]
-        # gparams1 = [T.grad(cost1, param) for param in net1.hiddenLayer.params]
+        # The gradients wrt the CCAlayer parametres (W & b)
+        gparam_W = (grad_E_to_o) * (net.lastLayer.output*(1-net.lastLayer.output)) * (net.hiddenLayer.output)
+        gparam_b = (grad_E_to_o) * (net.lastLayer.output*(1-net.lastLayer.output)) * theano.shared(numpy.array([1.0],dtype=theano.config.floatX), borrow=True)
+        gparams = [gparam_W, gparam_b.flatten()]
 
-        gparams1 =[gparam1_W ,gparam1_b]
+        updates = [
+            (param, param - learning_rate * gparam)
+            for param, gparam in zip(net.lastLayer.params, gparams)
+        ]
 
+        print len(net.lastLayer.params)
+        for param, gparam in zip(net.lastLayer.params, gparams):
+            print param.type
+            print param.shape
+            print param.name
+            print gparam.type
+            print gparam.shape
+            print '------------'
 
-    if 1: # grad compute for net2
-        U, V, D = theano.tensor.nlinalg.svd(net2.lastLayer.Tval)
-        UVT = T.dot(U, V.T)
-        Delta12 = T.dot(net2.lastLayer.SigmaHat11**(-0.5), T.dot(UVT, net2.lastLayer.SigmaHat22**(-0.5)))
-        UDUT = T.dot(U, T.dot(D, U.T))
-        Delta11 = (-0.5) * T.dot(net2.lastLayer.SigmaHat11**(-0.5), T.dot(UVT, net2.lastLayer.SigmaHat22**(-0.5)))
-        grad_E_to_o = (1.0/8) * (2*Delta11*net2.lastLayer.H1bar+Delta12*net2.lastLayer.H2bar)
-        gparam2_W = (grad_E_to_o) * (net2.lastLayer.output*(1-net2.lastLayer.output)) * (net2.hiddenLayer.output)
-        gparam2_b = (grad_E_to_o) * (net2.lastLayer.output*(1-net2.lastLayer.output)) * 1
+        return updates
 
-        # gparams2 = [T.grad(cost2, param) for param in net2.params]
-        # gparams2 = [T.grad(cost2, param) for param in net2.hiddenLayer.params]
-
-        gparams2 =[gparam2_W, gparam2_b]
-
-
-    updates1 = [
-        (param, param - learning_rate * gparam)
-        for param, gparam in zip(net1.lastLayer.params, gparams1)
-    ]
-    updates2 = [
-        (param, param - learning_rate * gparam)
-        for param, gparam in zip(net2.lastLayer.params,  gparams2)
-    ]
-
-    # theano.printing.pydotprint(fprop_model2, outfile="model.png", var_with_name_simple=True)
     ###############
     # TRAIN MODEL #
     ###############
@@ -304,77 +296,32 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
     while (epoch < n_epochs) and (not done_looping):
         epoch = epoch + 1
         print 'epoch', epoch
-        #net1.fprop(test_set_x)
-        #net2.fprop(test_set_y)
-        h1hidden, h1tmpval = fprop_model1() # hidden and last layers outputs
-        h2hidden, h2tmpval = fprop_model2()
+        # -------------------------------- Forward
+        h1hidden, h1cca = fprop_model1() # hidden and last layers outputs
+        h2hidden, h2cca = fprop_model2()
         h1hidden = h1hidden.T
         h2hidden = h2hidden.T
-        h1tmpval = h1tmpval.T
-        h2tmpval = h2tmpval.T
-        if 1: # compute cost(H1, H2)
+        h1cca = h1cca.T
+        h2cca = h2cca.T
 
-            H1 = h1tmpval
-            H2 = h2tmpval
-            m = H1.shape[1]
+        #compute cost(H1, H2)
+        H1 = h1cca
+        H2 = h2cca
 
-            H1bar = H1 - (1.0/m)*numpy.dot(H1, numpy.ones((m,m), dtype=numpy.float32))
-            H2bar = H2 - (1.0/m)*numpy.dot(H2, numpy.ones((m,m), dtype=numpy.float32))
-            SigmaHat12 = (1.0/(m-1))*numpy.dot(H1bar, H2bar.T)
-            SigmaHat11 = (1.0/(m-1))*numpy.dot(H1bar, H1bar.T)
-            SigmaHat11 = SigmaHat11 + 0.0001*numpy.identity(SigmaHat11.shape[0], dtype=numpy.float32)
-            SigmaHat22 = (1.0/(m-1))*numpy.dot(H2bar, H2bar.T)
-            SigmaHat22 = SigmaHat22 + 0.0001*numpy.identity(SigmaHat22.shape[0], dtype=numpy.float32)
+        corr1 = net1.correlation(H1,H2)
+        print corr1.eval()
+        corr2 = net2.correlation(H1,H2)
+        print corr2.eval()
+        assert(corr1.eval()==corr2.eval())
 
-            Tval = numpy.dot(mat_pow(SigmaHat11), numpy.dot(SigmaHat12, mat_pow(SigmaHat22)))
+        Tval = net1.lastLayer.Tval
 
-            corr =  numpy.trace(numpy.dot(Tval.T, Tval))**(0.5)
-        if 1: # compute gradient dcost(H1,H2)/dH1
+        updates1 = compute_grad(net1)
+        updates2 = compute_grad(net2)
 
-            U, D, V, = numpy.linalg.svd(Tval)
-            UVT = numpy.dot(U, V.T)
-            Delta12 = numpy.dot(mat_pow(SigmaHat11), numpy.dot(UVT, mat_pow(SigmaHat22)))
-            UDUT = numpy.dot(U, numpy.dot(D, U.T))
-            Delta11 = (-0.5) * numpy.dot(mat_pow(SigmaHat11), numpy.dot(UDUT, mat_pow(SigmaHat22)))
-            grad_E_to_o = (1.0/m) * (2*numpy.dot(Delta11,H1bar)+numpy.dot(Delta12,H2bar))
-            gparam1_W = numpy.dot((h1hidden), ((grad_E_to_o) * (h1tmpval*(1-h1tmpval))).T)
-            gparam1_b = numpy.dot(numpy.ones((1,10000),dtype=theano.config.floatX), ((grad_E_to_o) * (h1tmpval*(1-h1tmpval))).T)
-            gparam1_W = theano.shared(gparam1_W, borrow=True)
-            gparam1_b = theano.shared(gparam1_b[0,:], borrow=True)
-
-            #gparams1 = [T.grad(cost1, param) for param in net1.params]
-            # gparams1 = [T.grad(cost1, param) for param in net1.hiddenLayer.params]
-
-            gparams1 = [gparam1_W, gparam1_b]
-
-            updates1 = [
-                (param, param - learning_rate * gparam)
-                for param, gparam in zip(net1.lastLayer.params, gparams1)
-            ]
-
-        if 1: # compute gradient dcost(H1,H2)/dH2
-            Tval2 = numpy.dot(mat_pow(SigmaHat22), numpy.dot(SigmaHat12.T, mat_pow(SigmaHat11)))
-            U, D, V, = numpy.linalg.svd(Tval2)
-            UVT = numpy.dot(U, V.T)
-            Delta12 = numpy.dot(mat_pow(SigmaHat22), numpy.dot(UVT, mat_pow(SigmaHat11)))
-            UDUT = numpy.dot(U, numpy.dot(D, U.T))
-            Delta11 = (-0.5) * numpy.dot(mat_pow(SigmaHat22), numpy.dot(UDUT, mat_pow(SigmaHat11)))
-            grad_E_to_o = (1.0/m) * (2*numpy.dot(Delta11,H2bar)+numpy.dot(Delta12,H1bar))
-            gparam2_W = numpy.dot((h2hidden), ((grad_E_to_o) * (h2tmpval*(1-h2tmpval))).T)
-            gparam2_b = numpy.dot(numpy.ones((1,10000),dtype=theano.config.floatX), ((grad_E_to_o) * (h2tmpval*(1-h2tmpval))).T)
-            gparam2_W = theano.shared(gparam2_W, borrow=True)
-            gparam2_b = theano.shared(gparam2_b[0,:], borrow=True)
-
-            gparams2 = [gparam2_W , gparam2_b]
-
-            updates2 = [
-                (param, param - learning_rate * gparam)
-                for param, gparam in zip(net2.lastLayer.params, gparams2)
-            ]
-
-        h1tmp = theano.shared(numpy.asarray(H1bar,dtype=theano.config.floatX),
+        h1tmp = theano.shared(numpy.asarray(net1.lastLayer.H1bar,dtype=theano.config.floatX),
                                  borrow=True)
-        h2tmp = theano.shared(numpy.asarray(H2bar,dtype=theano.config.floatX),
+        h2tmp = theano.shared(numpy.asarray(net2.lastLayer.H2bar,dtype=theano.config.floatX),
                                  borrow=True)
 
         train_model1 = theano.function(
@@ -382,7 +329,6 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
             outputs=[],
             updates=updates1,
             givens={
-                #x1: test_set_x,
                 h1: h1tmp,
                 h2: h2tmp
             }
@@ -392,7 +338,6 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
             outputs=[],
             updates=updates2,
             givens={
-                #x2: test_set_y,
                 h1: h1tmp,
                 h2: h2tmp
 
@@ -401,8 +346,8 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
 
         minibatch_avg_cost1 = train_model1()
         minibatch_avg_cost2 = train_model2()
-        #print 'corr1', minibatch_avg_cost1
-        #print 'corr2', minibatch_avg_cost2
+        print 'corr1', minibatch_avg_cost1
+        print 'corr2', minibatch_avg_cost2
         print 'corr', corr
         if epoch > 10:
             break
