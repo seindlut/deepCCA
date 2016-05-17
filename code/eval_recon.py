@@ -15,18 +15,18 @@ with open('models/dae/dAE_mnist_full.pkl', 'rb') as input:
     da = pickle.load(input)
 
 index = T.lscalar()
-# x = T.matrix('x')
-def da_recon(da, corruption_level):
-    tilde_x = da.get_corrupted_input(da.x, corruption_level)
+x = T.matrix('x')
+def da_recon(input, corruption_level):
+    tilde_x = da.get_corrupted_input(input, corruption_level)
     y = da.get_hidden_values(tilde_x)
     z = da.get_reconstructed_input(y)
     return z
 
 test_da = theano.function(
     [index],
-    da_recon(da=da, corruption_level = .0),
+    da_recon(x, corruption_level = .0),
     givens={
-        da.x: test_set_x[index]
+        x: test_set_x[index]
     }
 )
 
