@@ -9,7 +9,7 @@ import pickle
 
 datasets = load_data('mnist.pkl.gz')
 test_set_x, test_set_y = datasets[1]
-
+print 'test shape: ',test_set_x
 
 with open('models/dae/dAE_mnist_full.pkl', 'rb') as input:
     da = pickle.load(input)
@@ -29,6 +29,7 @@ eval_da = theano.function(
         x: test_set_x[index]
     }
 )
-
+print 'Input: ', train_set_x[0]
+print 'DA.input: ', da.x
 z = eval_da(0)
 print 'recontsructed', z
