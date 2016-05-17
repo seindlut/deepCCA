@@ -31,7 +31,5 @@ def da_recon(da, x, corruption_level):
 # )
 
 z = da_recon(da,test_set_x[0], .3)
-
 print 'Input: ', test_set_x[0]
-z = eval_da(0)
-print 'recontsructed', z
+print 'Recon: ',z
