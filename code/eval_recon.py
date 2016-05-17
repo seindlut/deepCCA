@@ -15,7 +15,6 @@ print 'Shape :', SET.shape
 with open('models/dae/dAE_mnist_full.pkl', 'rb') as input:
     da = pickle.load(input)
 
-index = T.lscalar()
 x = T.matrix('x')
 def da_recon(input, corruption_level):
     tilde_x = da.get_corrupted_input(input, corruption_level)
@@ -24,10 +23,10 @@ def da_recon(input, corruption_level):
     return z
 
 test_da = theano.function(
-    [index],
+    [],
     da_recon(x, corruption_level = .0),
     givens={
-        x: SET[index,:]
+        x: SET[0,:]
     }
 )
 
