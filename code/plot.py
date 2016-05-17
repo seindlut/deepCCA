@@ -31,7 +31,8 @@ plt.xlabel('Epoch')
 plt.ylabel('MSE reconstruction')
 plt.title('Deep Autoencoder (1 hidden layer)')
 plt.savefig('models/dae/MSE_dae.png',bbox_inches='tight')
-
+print 'final test: ',mse_log_test[-1]
+print 'final train: ',mse_log[-1]
 
 '''  Corruption 0.3 '''
 
@@ -44,9 +45,11 @@ plt.xlabel('Epoch')
 plt.ylabel('MSE reconstruction')
 plt.title('Deep Denoising Autoencoder (1 hidden layer)')
 plt.savefig('models/dae/MSE_dae_corr30.png',bbox_inches='tight')
+print 'final train: ',mse_log[-1]
 
 
-with open('models/dae/dummy.pkl', 'rb') as input:
+
+with open('models/dae/dAE_test_0.pkl', 'rb') as input:
     z = cPickle.load(input)
 z = z.reshape((28,28))*255
 x = SET[0,:].reshape((28,28))*255
@@ -56,6 +59,8 @@ np.mean(z-x)
 diff = Image.fromarray(z-x)
 plt.imshow(diff)
 plt.imshow(original)
+
+plt.imshow(recon)
 ''''
 SdAE
 ''''

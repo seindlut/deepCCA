@@ -391,7 +391,7 @@ class dAE_nobias(object):
         return z
 
 
-def test_dAE(learning_rate=0.05, training_epochs=50, dataset='full', batch_size=64, output_folder='models/dae'):
+def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=64, output_folder='models/dae'):
 
     """
     This demo is tested on MNIST
@@ -510,80 +510,80 @@ def test_dAE(learning_rate=0.05, training_epochs=50, dataset='full', batch_size=
     #-------------------------------------------------
     # BUILDING THE CORRUPTED MODEL W/ BIAS
     #-------------------------------------------------
-    #
-    # rng = numpy.random.RandomState(123)
-    # theano_rng = RandomStreams(rng.randint(2 ** 30))
-    #
-    # da = dAE(
-    #     numpy_rng=rng,
-    #     theano_rng=theano_rng,
-    #     input=x,
-    #     n_visible=dim[0]*dim[1],
-    #     n_hidden=500
-    # )
-    #
-    # cost, updates = da.get_cost_updates(
-    #     corruption_level=0.3,
-    #     learning_rate=learning_rate
-    # )
-    #
-    # train_da = theano.function(
-    #     [index],
-    #     cost,
-    #     updates=updates,
-    #     givens={
-    #         x: train_set_x[index * batch_size: (index + 1) * batch_size]
-    #     }
-    # )
-    #
-    # test_da = theano.function(
-    #     [],
-    #     da.mse_test_recon(corruption_level=0.3),
-    #     givens={
-    #         x: test_set_x[:]
-    #     }
-    # )
-    #
-    # start_time = time.clock()
-    #
-    # ############
-    # # TRAINING #
-    # ############
-    # mse_log =[]
-    # mse_test_log =[]
-    # # go through training epochs
-    # for epoch in xrange(training_epochs):
-    #     # go through trainng set
-    #     c = []
-    #     for batch_index in xrange(n_train_batches):
-    #         c.append(train_da(batch_index))
-    #
-    #     print 'Training epoch %d, cost ' % epoch, numpy.mean(c)
-    #     mse_log.append(numpy.mean(c))
-    #     mse_test_log.append(numpy.mean(test_da()))
-    # end_time = time.clock()
-    #
-    # training_time = (end_time - start_time)
-    #
-    # print >> sys.stderr, ('The 30% corruption code for file ' +
-    #                       os.path.split(__file__)[1] +
-    #                       ' ran for %.2fm' % (training_time / 60.))
-    #
-    # image = Image.fromarray(tile_raster_images(
-    #     X=da.W.get_value(borrow=True).T,
-    #     img_shape=dim, tile_shape=(10, 10),
-    #     tile_spacing=(1, 1)))
-    # image.save(output_folder+'/filters_corruption_30.png')
-    #
-    # # Save the model for later use:
-    # with open(output_folder+'/dAE_mnist_corrupted_'+dataset+'.pkl', 'wb') as output:
-    #     cPickle.dump(da, output, cPickle.HIGHEST_PROTOCOL)
-    #
-    # with open(output_folder+'/dAE_mnist_corr30_log.pkl', 'wb') as output:
-    #     cPickle.dump(mse_log, output, cPickle.HIGHEST_PROTOCOL)
-    #
-    # with open(output_folder+'/dAE_mnist_test_corr30_log.pkl', 'wb') as output:
-    #     cPickle.dump(mse_test_log, output, cPickle.HIGHEST_PROTOCOL)
+
+    rng = numpy.random.RandomState(123)
+    theano_rng = RandomStreams(rng.randint(2 ** 30))
+
+    da = dAE(
+        numpy_rng=rng,
+        theano_rng=theano_rng,
+        input=x,
+        n_visible=dim[0]*dim[1],
+        n_hidden=500
+    )
+
+    cost, updates = da.get_cost_updates(
+        corruption_level=0.3,
+        learning_rate=learning_rate
+    )
+
+    train_da = theano.function(
+        [index],
+        cost,
+        updates=updates,
+        givens={
+            x: train_set_x[index * batch_size: (index + 1) * batch_size]
+        }
+    )
+
+    test_da = theano.function(
+        [],
+        da.mse_test_recon(corruption_level=0.3),
+        givens={
+            x: test_set_x[:]
+        }
+    )
+
+    start_time = time.clock()
+
+    ############
+    # TRAINING #
+    ############
+    mse_log =[]
+    mse_test_log =[]
+    # go through training epochs
+    for epoch in xrange(training_epochs):
+        # go through trainng set
+        c = []
+        for batch_index in xrange(n_train_batches):
+            c.append(train_da(batch_index))
+
+        print 'Training epoch %d, cost ' % epoch, numpy.mean(c)
+        mse_log.append(numpy.mean(c))
+        mse_test_log.append(numpy.mean(test_da()))
+    end_time = time.clock()
+
+    training_time = (end_time - start_time)
+
+    print >> sys.stderr, ('The 30% corruption code for file ' +
+                          os.path.split(__file__)[1] +
+                          ' ran for %.2fm' % (training_time / 60.))
+
+    image = Image.fromarray(tile_raster_images(
+        X=da.W.get_value(borrow=True).T,
+        img_shape=dim, tile_shape=(10, 10),
+        tile_spacing=(1, 1)))
+    image.save(output_folder+'/filters_corruption_30.png')
+
+    # Save the model for later use:
+    with open(output_folder+'/dAE_mnist_corrupted_'+dataset+'.pkl', 'wb') as output:
+        cPickle.dump(da, output, cPickle.HIGHEST_PROTOCOL)
+
+    with open(output_folder+'/dAE_mnist_corr30_log.pkl', 'wb') as output:
+        cPickle.dump(mse_log, output, cPickle.HIGHEST_PROTOCOL)
+
+    with open(output_folder+'/dAE_mnist_test_corr30_log.pkl', 'wb') as output:
+        cPickle.dump(mse_test_log, output, cPickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':
