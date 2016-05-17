@@ -9,9 +9,10 @@ import numpy as np
 
 # Test set:
 datasets = load_data('mnist.pkl.gz')
-test_set_x, test_set_y = datasets[1]
+test_set_x, _ = datasets[1]
+sdae_test, _ = datasets[2]
 SET = test_set_x.get_value(borrow=True)
-
+SSET = sdae_test.get_value(borrow=True)
 
 
 
@@ -61,15 +62,24 @@ plt.imshow(diff)
 plt.imshow(original)
 
 plt.imshow(recon)
+
+
 ''''
 SdAE
 ''''
+with open('models/sdae/SdAE_fn_losses.pkl', 'rb') as input:
+    fn = cPickle.load(input)
+
+fntr = fn["train"]
+fnt = fn["test"]
+fnv = fn["val"]
+corr = fn['corruption_levels']
 with open('models/sdae/SdAE_mnist_pre_log.pkl', 'rb') as input:
     mse_layer = cPickle.load(input)
 print len(mse_layer)
 plt.figure(figsize=(6,4))
 for i in range(len(mse_layer)):
-    plt.plot(range(len(mse_layer[i])), mse_layer[i], label='layer '+str(i))
+    plt.plot(range(len(mse_layer[i])), mse_layer[i], label='layer '+str(i)+ '(noise = )'+str(corr[i]))
 plt.legend()
 plt.xlabel('Epoch')
 plt.ylabel('MSE reconstruction - pretraining')
@@ -77,16 +87,28 @@ plt.title('SDAE pre-training')
 plt.savefig('models/dae/sdae_pre.png',bbox_inches='tight')
 
 
-with open('models/sdae/SdAE_fn_losses.pkl', 'rb') as input:
-    fn = cPickle.load(input)
+plt.plot(range(len(fntr)), fntr, label ='train')
+plt.plot(range(len(fnv)), fnv, label = 'val')
+plt.plot(range(len(fnt)), fnt, label = 'test')
 
-fnt = fn["train"]
-fnv = fn["test"]
-len(fnt)
-len(fnv)
-plt.plot(range(len(fnt)), fnt, label ='train')
-plt.plot(range(len(fnv)), fnv, label = 'test')
 plt.legend()
 plt.xlabel("Finetuning epoch")
 plt.ylabel('Error')
 plt.title('Finetuning  - logistic regression')
+
+
+""" Reconstruction """
+
+with open('models/sdae/SdAE_test_recon-pretrain.pkl', 'rb') as input:
+    Q = cPickle.load(input)
+
+z = Q[0,:].reshape((28,28))*255
+x = SSET[0,:].reshape((28,28))*255
+recon = Image.fromarray(z)
+original = Image.fromarray(x)
+np.mean(z-x)
+diff = Image.fromarray(z-x)
+plt.imshow(original)
+plt.title('original')
+plt.imshow(recon)
+plt.title('Rec')

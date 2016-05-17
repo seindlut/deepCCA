@@ -474,6 +474,6 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
     with open(output_folder+'/SdAE_mnist.pkl', 'wb') as output:
         cPickle.dump(sda, output, cPickle.HIGHEST_PROTOCOL)
     with open(output_folder+'/SdAE_fn_losses.pkl', 'wb') as output:
-        cPickle.dump({"train":fn, "val":fnv, "test": fnt}, output, cPickle.HIGHEST_PROTOCOL)
+        cPickle.dump({"train":fn, "val":fnv, "test": fnt, "noise":corruption_levels}, output, cPickle.HIGHEST_PROTOCOL)
 if __name__ == '__main__':
     test_SdAE()
