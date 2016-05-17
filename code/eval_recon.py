@@ -10,6 +10,7 @@ import pickle
 datasets = load_data('mnist.pkl.gz')
 test_set_x, test_set_y = datasets[1]
 SET = test_set_x.get_value(borrow=True)
+print SET[0,:]
 print 'Shape :', SET.shape
 with open('models/dae/dAE_mnist_full.pkl', 'rb') as input:
     da = pickle.load(input)
