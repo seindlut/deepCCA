@@ -9,8 +9,12 @@ import pickle
 with open('models/dae/dAE_mnist_log.pkl', 'rb') as input:
     mse_log = pickle.load(input)
 
+with open('models/dae/dAE_mnist_log.pkl', 'rb') as input:
+    mse_log_test = pickle.load(input)
+
 plt.figure(figsize=(6,4))
 plt.plot(range(len(mse_log)), mse_log)
+plt.plot(range(len(mse_log_test)), mse_log_test)
 plt.xlabel('Epoch')
 plt.ylabel('MSE reconstruction')
 plt.title('Deep Autoencoder (1 hidden layer)')
