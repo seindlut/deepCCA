@@ -3,7 +3,8 @@ import theano
 import theano.tensor as T
 from logistic_sgd import load_data
 from dAE import dAE_nobias
-import pickle
+from six.moves import cPickle
+
 
 
 
@@ -13,7 +14,7 @@ SET = test_set_x.get_value(borrow=True)
 print SET[0,:]
 print 'Shape :', SET.shape
 with open('models/dae/dAE_mnist_full.pkl', 'rb') as input:
-    da = pickle.load(input)
+    da = cPickle.load(input)
 
 x = T.matrix('x')
 def da_recon(input, corruption_level):
