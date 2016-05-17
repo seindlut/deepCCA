@@ -40,7 +40,9 @@ from theano.tensor.shared_randomstreams import RandomStreams
 from logistic_sgd import load_data
 import pickle
 from PIL import Image
-
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.style.use('ggplot')
 
 
 def Trelu(x): #-----------------------------------------Activation function
@@ -375,7 +377,7 @@ class dAE_nobias(object):
     def mse(self):
         return T.mean((self.z-self.x)**2)
 
-def test_dAE(learning_rate=0.05, training_epochs=100, dataset='full', batch_size=36, output_folder='models/dae'):
+def test_dAE(learning_rate=0.05, training_epochs=3, dataset='full', batch_size=64, output_folder='models/dae'):
 
     """
     This demo is tested on MNIST
@@ -449,6 +451,7 @@ def test_dAE(learning_rate=0.05, training_epochs=100, dataset='full', batch_size
     # TRAINING
     #--------------
     # go through training epochs
+    mse_log =[]
     for epoch in xrange(training_epochs):
         # go through trainng set
         c = []
@@ -456,7 +459,7 @@ def test_dAE(learning_rate=0.05, training_epochs=100, dataset='full', batch_size
             c.append(train_da(batch_index))
 
         print 'Training epoch %d, cost ' % epoch, numpy.mean(c)
-
+        mse_log.append(numpy.mean(c))
     end_time = time.clock()
 
     training_time = (end_time - start_time)
@@ -472,6 +475,13 @@ def test_dAE(learning_rate=0.05, training_epochs=100, dataset='full', batch_size
     with open(output_folder+'/dAE_mnist_'+dataset+'.pkl', 'wb') as output:
         pickle.dump(da, output, pickle.HIGHEST_PROTOCOL)
 
+    plt.figure(figsize=(6,4))
+    plt.plot(range(len(mse_log)), mse_log)
+    plt.xlabel('Epoch')
+    plt.ylabel('MSE reconstruction')
+    plt.title('Deep Autoencoder (1 hidden layer)')
+    plt.savefig(output_folder+'/MSE_dae.png')
+    plt.show()
     #-------------------------------------------------
     # BUILDING THE CORRUPTED MODEL W/ BIAS
     #-------------------------------------------------
@@ -506,7 +516,7 @@ def test_dAE(learning_rate=0.05, training_epochs=100, dataset='full', batch_size
     ############
     # TRAINING #
     ############
-
+    mse_log =[]
     # go through training epochs
     for epoch in xrange(training_epochs):
         # go through trainng set
@@ -515,6 +525,7 @@ def test_dAE(learning_rate=0.05, training_epochs=100, dataset='full', batch_size
             c.append(train_da(batch_index))
 
         print 'Training epoch %d, cost ' % epoch, numpy.mean(c)
+        mse_log.append(numpy.mean(c))
 
     end_time = time.clock()
 
@@ -533,7 +544,13 @@ def test_dAE(learning_rate=0.05, training_epochs=100, dataset='full', batch_size
     # Save the model for later use:
     with open(output_folder+'/dAE_mnist_corrupted_'+dataset+'.pkl', 'wb') as output:
         pickle.dump(da, output, pickle.HIGHEST_PROTOCOL)
-
+    plt.figure(figsize=(6,4))
+    plt.plot(range(len(mse_log)), mse_log)
+    plt.xlabel('Epoch')
+    plt.ylabel('MSE reconstruction')
+    plt.title('Deep Denoising Autoencoder (1 hidden layer)')
+    plt.savefig(output_folder+'/MSE_dae_corr30.png')
+    plt.show()
 
 
 

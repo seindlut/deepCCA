@@ -13,6 +13,9 @@ from mlp import MLP
 from utils import tile_raster_images,plot_weights
 from PIL import Image
 import pickle
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.style.use('ggplot')
 
 class SdAE(object):
     def __init__(
@@ -328,7 +331,10 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
     start_time = time.clock()
     ## Pre-train layer-wise
     corruption_levels = [0.1, 0.2, 0.3]
+    mse_layer = {}
+    plt.figure(figsize=(6,4))
     for i in xrange(sda.n_layers):
+        mse_layer{i} = []
         # go through pretraining epochs
         for epoch in xrange(pretraining_epochs):
             # go through the training set
@@ -339,6 +345,10 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
                          lr=pretrain_lr))
             print 'Pre-training layer %i, epoch %d, cost ' % (i, epoch),
             print numpy.mean(c)
+            mse_layer{i}.append(numpy.mean(c))
+        plt.plot(range(len(pretraining_epochs),mse_layer{i})
+    plt.savefig(output_folder+'sda_pretraining.png')
+    plt.show()
 
     end_time = time.clock()
 
