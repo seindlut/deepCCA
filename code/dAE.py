@@ -429,7 +429,7 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
         dim = (28,28)
 
     train_set_x, train_set_y = datasets[0]
-    test_set_x, test_set_y = datasets[1]
+    test_set_x, test_set_y = datasets[2]
 
     # compute number of minibatches for training, validation and testing
     n_train_batches = train_set_x.get_value(borrow=True).shape[0] / batch_size
