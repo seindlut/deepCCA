@@ -454,7 +454,7 @@ def test_dAE(learning_rate=0.05, training_epochs=3, dataset='full', batch_size=6
         [index],
         da.mse_test_recon(corruption_level=0.),
         givens={
-            x: test_set_x
+            x: test_set_x[index * batch_size: (index + 1) * batch_size]
         }
     )
 
@@ -475,7 +475,7 @@ def test_dAE(learning_rate=0.05, training_epochs=3, dataset='full', batch_size=6
 
         print 'Training epoch %d, cost ' % epoch, numpy.mean(c)
         mse_log.append(numpy.mean(c))
-        mse_test_log.append(numpy.mean(test_da))
+        mse_test_log.append(numpy.mean(test_da(1)))
 
     end_time = time.clock()
 
