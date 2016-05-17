@@ -68,7 +68,6 @@ SdAE
 ''''
 with open('models/sdae/SdAE_fn_losses.pkl', 'rb') as input:
     fn = cPickle.load(input)
-
 fntr = fn["train"]
 fnt = fn["test"]
 fnv = fn["val"]

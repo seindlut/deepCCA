@@ -734,9 +734,10 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
         gparam1_W = (grad_E_to_o) * (net1.lastLayer.output*(1-net1.lastLayer.output)) * (net1.hiddenLayer.output)
         gparam1_b = (grad_E_to_o) * (net1.lastLayer.output*(1-net1.lastLayer.output)) * theano.shared(numpy.array([1.0],dtype=theano.config.floatX), borrow=True)
         #gparams1 = [T.grad(cost1, param) for param in net1.params]
-        gparams1 = [T.grad(cost1, param) for param in net1.hiddenLayer.params]
+        #gparams1 = [T.grad(cost1, param) for param in net1.hiddenLayer.params]
+        gparams1 =[]
         gparams1.append(gparam1_W)
-        #gparams1.append(gparam1_b)
+        gparams1.append(gparam1_b)
     if 1: # grad compute for net2
         U, V, D = theano.tensor.nlinalg.svd(net2.lastLayer.Tval)
         UVT = T.dot(U, V.T)
@@ -747,7 +748,8 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
         gparam2_W = (grad_E_to_o) * (net2.lastLayer.output*(1-net2.lastLayer.output)) * (net2.hiddenLayer.output)
         gparam2_b = (grad_E_to_o) * (net2.lastLayer.output*(1-net2.lastLayer.output)) * 1
         #gparams1 = [T.grad(cost1, param) for param in net1.params]
-        gparams2 = [T.grad(cost2, param) for param in net2.hiddenLayer.params]
+        # gparams2 = [T.grad(cost2, param) for param in net2.hiddenLayer.params]
+        gparams2 =[]
         gparams2.append(gparam2_W)
         gparams2.append(gparam2_b)
 
