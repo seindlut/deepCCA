@@ -382,7 +382,7 @@ class dAE_nobias(object):
         return T.mean((z-self.x)**2)
 
 
-def test_dAE(learning_rate=0.05, training_epochs=3, dataset='full', batch_size=64, output_folder='models/dae'):
+def test_dAE(learning_rate=0.05, training_epochs=50, dataset='full', batch_size=64, output_folder='models/dae'):
 
     """
     This demo is tested on MNIST
@@ -527,12 +527,21 @@ def test_dAE(learning_rate=0.05, training_epochs=3, dataset='full', batch_size=6
         }
     )
 
+    test_da = theano.function(
+        [],
+        da.mse_test_recon(corruption_level=0.3),
+        givens={
+            x: test_set_x[:]
+        }
+    )
+
     start_time = time.clock()
 
     ############
     # TRAINING #
     ############
     mse_log =[]
+    mse_test_log =[]
     # go through training epochs
     for epoch in xrange(training_epochs):
         # go through trainng set
@@ -542,7 +551,7 @@ def test_dAE(learning_rate=0.05, training_epochs=3, dataset='full', batch_size=6
 
         print 'Training epoch %d, cost ' % epoch, numpy.mean(c)
         mse_log.append(numpy.mean(c))
-
+        mse_test_log.append(numpy.mean(test_da()))
     end_time = time.clock()
 
     training_time = (end_time - start_time)
@@ -564,6 +573,8 @@ def test_dAE(learning_rate=0.05, training_epochs=3, dataset='full', batch_size=6
     with open(output_folder+'/dAE_mnist_corr30_log.pkl', 'wb') as output:
         pickle.dump(mse_log, output, pickle.HIGHEST_PROTOCOL)
 
+    with open(output_folder+'/dAE_mnist_test_corr30_log.pkl', 'wb') as output:
+        pickle.dump(mse_test_log, output, pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':
