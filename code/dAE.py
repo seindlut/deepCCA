@@ -471,7 +471,7 @@ def test_dAE(learning_rate=0.05, training_epochs=50, dataset='full', batch_size=
      [index],
      da.test_recon(corruption_level=0.),
      givens={
-         x: test_set_x[index]
+         x: test_set_x[index*1]
      }
     )
 
