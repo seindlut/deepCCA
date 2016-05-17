@@ -40,9 +40,7 @@ from theano.tensor.shared_randomstreams import RandomStreams
 from logistic_sgd import load_data
 import pickle
 from PIL import Image
-# import matplotlib.pyplot as plt
-# import matplotlib
-# matplotlib.style.use('ggplot')
+
 
 
 def Trelu(x): #-----------------------------------------Activation function
