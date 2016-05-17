@@ -12,7 +12,7 @@ from dAE import dAE
 from mlp import MLP
 from utils import tile_raster_images,plot_weights
 from PIL import Image
-import pickle
+from siw.moves import cPickle
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.style.use('ggplot')
@@ -266,7 +266,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
     :param n_iter: maximal number of iterations ot run the optimizer
 
     :type dataset: string
-    :param dataset: path the the pickled dataset
+    :param dataset: path the the cPickled dataset
 
     """
     if not os.path.isdir(output_folder):
@@ -347,7 +347,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
             print numpy.mean(c)
             mse_layer{i}.append(numpy.mean(c))
     with open(output_folder+'/SdAE_mnist_pre_log.pkl', 'wb') as output:
-        pickle.dump(mse_layer, output, pickle.HIGHEST_PROTOCOL)
+        cPickle.dump(mse_layer, output, cPickle.HIGHEST_PROTOCOL)
 
 
 
@@ -366,6 +366,10 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
         )
     Q=fprop()
     print 'rec', ((Q-test_set_x.eval())**2).mean()
+
+    with open(output_folder+'/SdAE_test_recon-pretrain.pkl', 'wb') as output:
+        cPickle.dump(Q, output, cPickle.HIGHEST_PROTOCOL)
+
     image = Image.fromarray(
         tile_raster_images(X=sda.dA_layers[0].W.get_value(borrow=True).T,
                            img_shape=(28, 28), tile_shape=(10, 10),
@@ -466,16 +470,19 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
 
     done_looping = False
     epoch = 0
-
+    fn = []
+    fnv =[]
     while (epoch < training_epochs) and (not done_looping):
         epoch = epoch + 1
         for minibatch_index in xrange(n_train_batches):
             minibatch_avg_cost = train_fn(minibatch_index)
+            fn.append(minibatch_avg_cost)
             iter = (epoch - 1) * n_train_batches + minibatch_index
 
             if (iter + 1) % validation_frequency == 0:
                 validation_losses = validate_model()
                 this_validation_loss = numpy.mean(validation_losses)
+                fvn.append(this_validation_loss)
                 print('epoch %i, minibatch %i/%i, validation error %f %%' %
                       (epoch, minibatch_index + 1, n_train_batches,
                        this_validation_loss * 100.))
@@ -520,6 +527,8 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
                           ' ran for %.2fm' % ((end_time - start_time) / 60.))
 
     with open(output_folder+'/SdAE_mnist.pkl', 'wb') as output:
-        pickle.dump(sda, output, pickle.HIGHEST_PROTOCOL)
+        cPickle.dump(sda, output, cPickle.HIGHEST_PROTOCOL)
+    with open(output_folder+'/SdAE_fn_losses.pkl', 'wb') as output:
+        cPickle.dump({"train":fn, "test":fnv}, output, cPickle.HIGHEST_PROTOCOL)
 if __name__ == '__main__':
     test_SdAE()

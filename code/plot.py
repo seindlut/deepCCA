@@ -64,8 +64,6 @@ plt.imshow(recon)
 ''''
 SdAE
 ''''
-
-
 with open('models/sdae/SdAE_mnist_pre_log.pkl', 'rb') as input:
     mse_layer = cPickle.load(input)
 

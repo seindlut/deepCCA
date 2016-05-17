@@ -273,6 +273,17 @@ class dAE(object):
 
         return (cost, updates)
 
+    def mse_test_recon(self, corruption_level):
+        tilde_x = self.get_corrupted_input(self.x, corruption_level)
+        y = self.get_hidden_values(tilde_x)
+        z = self.get_reconstructed_input(y)
+        return T.mean((z-self.x)**2)
+
+    def test_recon(self, corruption_level):
+        tilde_x = self.get_corrupted_input(self.x, corruption_level)
+        y = self.get_hidden_values(tilde_x)
+        z = self.get_reconstructed_input(y)
+        return z
 
 
 """ Same dAE without bias terms """
