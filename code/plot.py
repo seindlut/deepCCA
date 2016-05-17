@@ -4,15 +4,14 @@ matplotlib.style.use('ggplot')
 from six.moves import cPickle
 from PIL import Image
 import numpy as np
+from logistic_sgd import load_data
 # w/ Ipython kernel
 %matplotlib inline
 
 # Test set:
 datasets = load_data('mnist.pkl.gz')
-test_set_x, _ = datasets[1]
-sdae_test, _ = datasets[2]
+test_set_x, _ = datasets[2]
 SET = test_set_x.get_value(borrow=True)
-SSET = sdae_test.get_value(borrow=True)
 
 
 

@@ -509,12 +509,12 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
                            img_shape=dim, tile_shape=(10, 10),
                            tile_spacing=(1, 1)))
     image.save(output_folder+'/filters_corruption_0.png')
-    with open(output_folder+'/dAE_mnist_'+dataset+'.pkl', 'wb') as output:
+    with open(output_folder+'/unc_'+dataset+'.pkl', 'wb') as output:
         cPickle.dump(da, output, cPickle.HIGHEST_PROTOCOL)
 
-    with open(output_folder+'/dAE_mnist_log.pkl', 'wb') as output:
+    with open(output_folder+'/unc_log_train.pkl', 'wb') as output:
         cPickle.dump(mse_log, output, cPickle.HIGHEST_PROTOCOL)
-    with open(output_folder+'/dAE_mnist_test_log.pkl', 'wb') as output:
+    with open(output_folder+'/unc_log_test.pkl', 'wb') as output:
         cPickle.dump(mse_test_log, output, cPickle.HIGHEST_PROTOCOL)
 
 
@@ -587,13 +587,13 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
     image.save(output_folder+'/filters_corruption_30.png')
 
     # Save the model for later use:
-    with open(output_folder+'/dAE_mnist_corrupted_'+dataset+'.pkl', 'wb') as output:
+    with open(output_folder+'/corr30_'+dataset+'.pkl', 'wb') as output:
         cPickle.dump(da, output, cPickle.HIGHEST_PROTOCOL)
 
-    with open(output_folder+'/dAE_mnist_corr30_log.pkl', 'wb') as output:
+    with open(output_folder+'/corr30_log_train.pkl', 'wb') as output:
         cPickle.dump(mse_log, output, cPickle.HIGHEST_PROTOCOL)
 
-    with open(output_folder+'/dAE_mnist_test_corr30_log.pkl', 'wb') as output:
+    with open(output_folder+'/corr30_log_test.pkl', 'wb') as output:
         cPickle.dump(mse_test_log, output, cPickle.HIGHEST_PROTOCOL)
 
 

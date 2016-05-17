@@ -9,7 +9,7 @@ from six.moves import cPickle
 
 
 datasets = load_data('mnist.pkl.gz')
-test_set_x, test_set_y = datasets[1]
+test_set_x, test_set_y = datasets[2]
 
 """ DAE """
 with open('models/dae/dAE_mnist_corrupted_full.pkl', 'rb') as input:
