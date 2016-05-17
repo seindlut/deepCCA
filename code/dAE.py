@@ -384,6 +384,12 @@ class dAE_nobias(object):
         z = self.get_reconstructed_input(y)
         return T.mean((z-self.x)**2)
 
+    def test_recon(self, corruption_level):
+        tilde_x = self.get_corrupted_input(self.x, corruption_level)
+        y = self.get_hidden_values(tilde_x)
+        z = self.get_reconstructed_input(y)
+        return z
+
 
 def test_dAE(learning_rate=0.05, training_epochs=50, dataset='full', batch_size=64, output_folder='models/dae'):
 
@@ -461,6 +467,14 @@ def test_dAE(learning_rate=0.05, training_epochs=50, dataset='full', batch_size=
         }
     )
 
+    predict = theano.function(
+     [index],
+     da.test_recon(corruption_level=0.),
+     givens={
+         x: test_set_x[index]
+     }
+    )
+
 
     start_time = time.clock()
 
@@ -479,6 +493,10 @@ def test_dAE(learning_rate=0.05, training_epochs=50, dataset='full', batch_size=
         print 'Training epoch %d, cost ' % epoch, numpy.mean(c)
         mse_log.append(numpy.mean(c))
         mse_test_log.append(numpy.mean(test_da()))
+
+    z = predict(0)
+    with open(output_folder+'/dummy.pkl', 'wb') as output:
+        cPickle.dump(z, output, cPickle.HIGHEST_PROTOCOL)
 
     end_time = time.clock()
 
