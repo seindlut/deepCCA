@@ -99,7 +99,7 @@ class SdAE(object):
             inp=self.dA_layers[i].get_hidden_values(inp)
         for i in xrange(self.n_layers):
             inp=self.dA_layers[self.n_layers-i-1].get_reconstructed_input(inp)
-        # FIXME Output is the reconstructed input 
+        # FIXME Output is the reconstructed input
         self.output = inp
 
         # We now need to add a logistic layer on top of the MLP
@@ -433,7 +433,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
             epoch += 1
 
     # Build an MLP from the pretrained DAE
-    net = MLP(numpy_rng, train_set_x_lab, 28*14, hidden_layer_size, 28*14, W1=sda.dA_layers[0].W, b1=sda.dA_layers[0].b, W2=None, b2=None) #Change to 28x28
+    net = MLP(numpy_rng, train_set_x_lab, 28*14, hidden_layer_size, 28*14, W1=sda.dA_layers[0].W, b1=sda.dA_layers[0].b, W2=None, b2=None) #FIXME Change to 28x28
     ########################
     ########################
     # FINETUNING THE MODEL #

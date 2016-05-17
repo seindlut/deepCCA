@@ -9,8 +9,8 @@ import pickle
 
 datasets = load_data('mnist.pkl.gz')
 test_set_x, test_set_y = datasets[1]
-print 'test shape: ',test_set_x.get_value(borrow=True).shape
-
+SET = test_set_x.get_value(borrow=True)
+print 'Shape :', SET.shape
 with open('models/dae/dAE_mnist_full.pkl', 'rb') as input:
     da = pickle.load(input)
 
@@ -26,7 +26,7 @@ test_da = theano.function(
     [index],
     da_recon(x, corruption_level = .0),
     givens={
-        x: test_set_x.get_value[index]
+        x: SET[index,:]
     }
 )
 
