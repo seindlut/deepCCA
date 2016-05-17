@@ -12,7 +12,7 @@ from dAE import dAE
 from mlp import MLP
 from utils import tile_raster_images,plot_weights
 from PIL import Image
-from siw.moves import cPickle
+from six.moves import cPickle
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.style.use('ggplot')
@@ -334,7 +334,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
     corruption_levels = [0.1, 0.2, 0.3]
     mse_layer = {}
     for i in xrange(sda.n_layers):
-        mse_layer{i} = []
+        mse_layer[i] = []
         # go through pretraining epochs
         for epoch in xrange(pretraining_epochs):
             # go through the training set
@@ -345,7 +345,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
                          lr=pretrain_lr))
             print 'Pre-training layer %i, epoch %d, cost ' % (i, epoch),
             print numpy.mean(c)
-            mse_layer{i}.append(numpy.mean(c))
+            mse_layer[i].append(numpy.mean(c))
     with open(output_folder+'/SdAE_mnist_pre_log.pkl', 'wb') as output:
         cPickle.dump(mse_layer, output, cPickle.HIGHEST_PROTOCOL)
 
@@ -482,7 +482,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
             if (iter + 1) % validation_frequency == 0:
                 validation_losses = validate_model()
                 this_validation_loss = numpy.mean(validation_losses)
-                fvn.append(this_validation_loss)
+                fnv.append(this_validation_loss)
                 print('epoch %i, minibatch %i/%i, validation error %f %%' %
                       (epoch, minibatch_index + 1, n_train_batches,
                        this_validation_loss * 100.))
