@@ -378,7 +378,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
 
     ########################
     # FINETUNING THE MODEL FOR REGRESSION #
-    if 0 : # pretrain middle layer
+    if 1 : # pretrain middle layer
         print '... pre-training MIDDLE layer'
 
         h1 = T.matrix('x')  # the data is presented as rasterized images
@@ -472,6 +472,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
     epoch = 0
     fn = []
     fnv =[]
+    fnt =[]
     while (epoch < training_epochs) and (not done_looping):
         epoch = epoch + 1
         for minibatch_index in xrange(n_train_batches):
@@ -483,11 +484,12 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
                 fn.append(minibatch_avg_cost)
                 validation_losses = validate_model()
                 this_validation_loss = numpy.mean(validation_losses)
-                fnv.append(this_validation_loss)
+
                 print('epoch %i, minibatch %i/%i, validation error %f %%' %
                       (epoch, minibatch_index + 1, n_train_batches,
                        this_validation_loss * 100.))
 
+                fnv.append(min(this_validation_loss, best_validation_loss))
                 # if we got the best validation score until now
                 if this_validation_loss < best_validation_loss:
 
@@ -509,6 +511,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
                            'best model %f %%') %
                           (epoch, minibatch_index + 1, n_train_batches,
                            test_score * 100.))
+                fnt.append(test_score)
 
             if patience <= iter:
                 done_looping = True
@@ -530,6 +533,6 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
     with open(output_folder+'/SdAE_mnist.pkl', 'wb') as output:
         cPickle.dump(sda, output, cPickle.HIGHEST_PROTOCOL)
     with open(output_folder+'/SdAE_fn_losses.pkl', 'wb') as output:
-        cPickle.dump({"train":fn, "test":fnv}, output, cPickle.HIGHEST_PROTOCOL)
+        cPickle.dump({"train":fn, "val":fnv, "test": fnt}, output, cPickle.HIGHEST_PROTOCOL)
 if __name__ == '__main__':
     test_SdAE()
