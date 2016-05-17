@@ -141,7 +141,7 @@ class dAE(object):
             theano_rng = RandomStreams(numpy_rng.randint(2 ** 30))
 
         # note : W' was written as `W_prime` and b' as `b_prime`
-        if not W:# ---------------------------------------------------------- Random initialization
+        if not W:# ------------------------------------------------------------------------------------ Random initialization
             # W is initialized with `initial_W` which is uniformely sampled
             # from -4*sqrt(6./(n_visible+n_hidden)) and
             # 4*sqrt(6./(n_hidden+n_visible))the output of uniform if
@@ -375,7 +375,14 @@ class dAE_nobias(object):
     def mse(self):
         return T.mean((self.z-self.x)**2)
 
-def test_dAE(learning_rate=0.05, training_epochs=50, dataset='full', batch_size=64, output_folder='models/dae'):
+    def mse_test_recon(self, corruption_level):
+        tilde_x = self.get_corrupted_input(self.x, corruption_level)
+        y = self.get_hidden_values(tilde_x)
+        z = self.get_reconstructed_input(y)
+        return T.mean((z-self.x)**2)
+
+
+def test_dAE(learning_rate=0.05, training_epochs=3, dataset='full', batch_size=64, output_folder='models/dae'):
 
     """
     This demo is tested on MNIST
@@ -443,6 +450,15 @@ def test_dAE(learning_rate=0.05, training_epochs=50, dataset='full', batch_size=
         }
     )
 
+    test_da = theano.function(
+        [index],
+        da.mse_test_recon(corruption_level=0.),
+        givens={
+            x: test_set_x
+        }
+    )
+
+
     start_time = time.clock()
 
     #--------------
@@ -450,6 +466,7 @@ def test_dAE(learning_rate=0.05, training_epochs=50, dataset='full', batch_size=
     #--------------
     # go through training epochs
     mse_log =[]
+    mse_test_log = []
     for epoch in xrange(training_epochs):
         # go through trainng set
         c = []
@@ -458,6 +475,8 @@ def test_dAE(learning_rate=0.05, training_epochs=50, dataset='full', batch_size=
 
         print 'Training epoch %d, cost ' % epoch, numpy.mean(c)
         mse_log.append(numpy.mean(c))
+        mse_test_log.append(numpy.mean(test_da))
+
     end_time = time.clock()
 
     training_time = (end_time - start_time)
@@ -475,14 +494,10 @@ def test_dAE(learning_rate=0.05, training_epochs=50, dataset='full', batch_size=
 
     with open(output_folder+'/dAE_mnist_log.pkl', 'wb') as output:
         pickle.dump(mse_log, output, pickle.HIGHEST_PROTOCOL)
+    with open(output_folder+'/dAE_mnist_test_log.pkl', 'wb') as output:
+        pickle.dump(mse_test_log, output, pickle.HIGHEST_PROTOCOL)
 
-    # plt.figure(figsize=(6,4))
-    # plt.plot(range(len(mse_log)), mse_log)
-    # plt.xlabel('Epoch')
-    # plt.ylabel('MSE reconstruction')
-    # plt.title('Deep Autoencoder (1 hidden layer)')
-    # plt.savefig(output_folder+'/MSE_dae.png')
-    # plt.show()
+
     #-------------------------------------------------
     # BUILDING THE CORRUPTED MODEL W/ BIAS
     #-------------------------------------------------
@@ -548,14 +563,6 @@ def test_dAE(learning_rate=0.05, training_epochs=50, dataset='full', batch_size=
 
     with open(output_folder+'/dAE_mnist_corr30_log.pkl', 'wb') as output:
         pickle.dump(mse_log, output, pickle.HIGHEST_PROTOCOL)
-
-    # plt.figure(figsize=(6,4))
-    # plt.plot(range(len(mse_log)), mse_log)
-    # plt.xlabel('Epoch')
-    # plt.ylabel('MSE reconstruction')
-    # plt.title('Deep Denoising Autoencoder (1 hidden layer)')
-    # plt.savefig(output_folder+'/MSE_dae_corr30.png')
-    # plt.show()
 
 
 
