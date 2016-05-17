@@ -12,7 +12,7 @@ from dAE import dAE
 from mlp import MLP
 from utils import tile_raster_images,plot_weights
 from PIL import Image
-from six.moves import cPickle
+from siw.moves import cPickle
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.style.use('ggplot')
@@ -476,10 +476,11 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
         epoch = epoch + 1
         for minibatch_index in xrange(n_train_batches):
             minibatch_avg_cost = train_fn(minibatch_index)
-            fn.append(minibatch_avg_cost)
+
             iter = (epoch - 1) * n_train_batches + minibatch_index
 
             if (iter + 1) % validation_frequency == 0:
+                fn.append(minibatch_avg_cost)
                 validation_losses = validate_model()
                 this_validation_loss = numpy.mean(validation_losses)
                 fnv.append(this_validation_loss)

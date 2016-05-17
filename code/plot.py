@@ -66,12 +66,27 @@ SdAE
 ''''
 with open('models/sdae/SdAE_mnist_pre_log.pkl', 'rb') as input:
     mse_layer = cPickle.load(input)
-
+print len(mse_layer)
 plt.figure(figsize=(6,4))
 for i in range(len(mse_layer)):
-    plt.plot(range(len(mse_layer{i})), mse_layer{i}, label='layer '+str(i))
-
+    plt.plot(range(len(mse_layer[i])), mse_layer[i], label='layer '+str(i))
+plt.legend()
 plt.xlabel('Epoch')
 plt.ylabel('MSE reconstruction - pretraining')
 plt.title('SDAE pre-training')
 plt.savefig('models/dae/sdae_pre.png',bbox_inches='tight')
+
+
+with open('models/sdae/SdAE_fn_losses.pkl', 'rb') as input:
+    fn = cPickle.load(input)
+
+fnt = fn["train"]
+fnv = fn["test"]
+len(fnt)
+len(fnv)
+plt.plot(range(len(fnt)), fnt, label ='train')
+plt.plot(range(len(fnv)), fnv, label = 'test')
+plt.legend()
+plt.xlabel("Finetuning epoch")
+plt.ylabel('Error')
+plt.title('Finetuning  - logistic regression')
