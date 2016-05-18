@@ -42,7 +42,7 @@ def load_data_half(dataset):
         print 'Downloading data from %s' % origin
         urllib.urlretrieve(origin, dataset)
 
-    print 'loading data...'
+    print '...loading data'
 
     # Load the dataset
     f = gzip.open(dataset, 'rb')
@@ -77,7 +77,7 @@ def load_data_half(dataset):
 
     rval = [(train_set_x, train_set_y), (valid_set_x, valid_set_y),
             (test_set_x, test_set_y)]
-    print 'Done'
+    print '...done'
     return rval
 
 
@@ -89,7 +89,7 @@ def load_data_full():
 
     # LOAD DATA #
     import theano
-    
+
     print 'loading data...'
     # Loading the numpy arrays
     data_npy = numpy.load('../data/mnist_pairs_da.npz')

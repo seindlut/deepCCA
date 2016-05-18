@@ -50,7 +50,7 @@ class DCCA(MLP):
             input=input,
             n_in=n_in,
             n_out=n_hidden,
-            activation=T.nnet.sigmoid
+            activation=T.nnet.sigmoid,
         )
 
         self.lastLayer = CCALayer(
@@ -77,7 +77,7 @@ class DCCA(MLP):
         self.correlation_numpy = (
             self.lastLayer.correlation_numpy
         )
-        #self.errors = self.lastLayer.errors
+
         self.output = self.lastLayer.output
         self.params = self.hiddenLayer.params + self.lastLayer.params
 
@@ -218,25 +218,14 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
         input=x1,
         n_in=28 * 28,
         n_hidden=300,
-        n_out=8
+        n_out=8,
     )
     net2 = DCCA(
         rng=rng,
         input=x2,
         n_in=10,
         n_hidden=20,
-        n_out=8
-    )
-
-    cost1 = (
-        net1.correlation(h1, h2)
-        + L1_reg * net1.L1
-        + L2_reg * net1.L2_sqr
-    )
-    cost2 = (
-        net2.correlation(h1, h2)
-        + L1_reg * net2.L1
-        + L2_reg * net2.L2_sqr
+        n_out=8,
     )
 
 
@@ -255,7 +244,20 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
             x2: train_set_y
         }
     )
-    # theano.printing.pydotprint(fprop_model2, outfile="models/dcca/model.png", var_with_name_simple=True)
+    cost1 = (
+        net1.correlation(h1, h2)
+        + L1_reg * net1.L1
+        + L2_reg * net1.L2_sqr
+    )
+
+    cost2 = (
+        net2.correlation(h1, h2)
+        + L1_reg * net2.L1
+        + L2_reg * net2.L2_sqr
+    )
+
+
+    theano.printing.pydotprint(fprop_model2, outfile="models/dcca/model.png", var_with_name_simple=True)
     ###############
     # TRAIN MODEL #
     ###############
@@ -286,30 +288,41 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
     while (epoch < n_epochs) and (not done_looping):
         epoch = epoch + 1
         print 'epoch', epoch
-        # -------------------------------- Forward
+        print '...... Forward'
         h1hidden, h1cca = fprop_model1() # hidden and last layers outputs
         h2hidden, h2cca = fprop_model2()
+        print h1cca
+        print '...... Backward'
         #compute cost(H1, H2)
         H1 = h1cca.T
         H2 = h2cca.T
-
+        print 'H1: ', H1.shape
+        print 'H2: ', H2.shape
         corr1 = net1.correlation(H1,H2)
         print 'Net1 correlation : ', corr1.eval()
         corr2 = net2.correlation(H1,H2)
         print 'Net2 correlation: ',corr2.eval()
         assert(corr1.eval()==corr2.eval())
 
+
+        h1tmp = theano.shared(numpy.asarray(net1.lastLayer.H1bar,dtype=theano.config.floatX),
+                                 borrow=True)
+        h2tmp = theano.shared(numpy.asarray(net2.lastLayer.H2bar,dtype=theano.config.floatX),
+                                 borrow=True)
+
         train_model1 = theano.function(
             inputs=[],
             outputs=[],
             updates=net1.get_updates(learning_rate=0.01),
-            givens={x1: train_set_x}
+            givens={x1: train_set_x, h1:h1tmp, h2: h2tmp}
         )
+        print '\n\n h1:', h1.eval()
+
         train_model2 = theano.function(
             inputs=[],
             outputs=[],
             updates=net2.get_updates(learning_rate=0.01),
-            givens={x2: train_set_x}
+            givens={x2: train_set_y, h2: h2tmp, h1: h1tmp }
         )
 
         minibatch_avg_cost1 = train_model1()

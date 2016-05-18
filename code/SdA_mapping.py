@@ -39,7 +39,7 @@ import theano.tensor as T
 from theano.tensor.shared_randomstreams import RandomStreams
 
 from mlp import HiddenLayer
-from dA import dA, dA_nobias
+from dAE import dAE, dAE_nobias
 from utils import tile_raster_images,plot_weights, load_data_half
 
 try:
@@ -110,7 +110,7 @@ class SdA(object):
             theano_rng = RandomStreams(numpy_rng.randint(2 ** 30))
         # allocate symbolic variables for the data
         self.x = T.matrix('x')  # the data is presented as rasterized images
-        
+
         # end-snippet-1
 
         # The SdA is an MLP, for which all weights of intermediate layers
@@ -175,7 +175,7 @@ class SdA(object):
                           )
             self.dA_layers.append(dA_layer)
         # end-snippet-2
-        
+
         #self.errors = self.logLayer.errors(self.x)
 
     def pretraining_functions(self, train_set_x, batch_size):
@@ -229,7 +229,7 @@ class SdA(object):
 
         return pretrain_fns
 
-   
+
 class SdA_regress(object):
     def __init__(
         self,
@@ -246,25 +246,25 @@ class SdA_regress(object):
         corruption_levels_out=[0.1, 0.1]
     ):
         """ This class is made to support a variable number of layers.
-   
+
         :type numpy_rng: numpy.random.RandomState
         :param numpy_rng: numpy random number generator used to draw initial
                     weights
-   
+
         :type theano_rng: theano.tensor.shared_randomstreams.RandomStreams
         :param theano_rng: Theano random generator; if None is given one is
                            generated based on a seed drawn from `rng`
-   
+
         :type n_ins: int
         :param n_ins: dimension of the input to the sdA
-   
+
         :type n_layers_sizes: list of ints
         :param n_layers_sizes: intermediate layers size, must contain
                                at least one value
-   
+
         :type n_outs: int
         :param n_outs: dimension of the output of the network
-   
+
         :type corruption_levels: list of float
         :param corruption_levels: amount of corruption to use for each
                                   layer
@@ -275,21 +275,21 @@ class SdA_regress(object):
         self.sigmoid_layers = []
         self.params = []
         hidden_layers_sizes = hidden_layers_sizes_inp + hidden_layers_sizes_out[::-1]
-        
+
         # +1 is for logistic regression layer
         self.n_layers = len(hidden_layers_sizes)
-   
+
         assert self.n_layers > 0
-   
+
         if not theano_rng:
             theano_rng = RandomStreams(numpy_rng.randint(2 ** 30))
         # allocate symbolic variables for the data
         self.x = T.matrix('x')  # the data is presented as rasterized images
         self.y = T.matrix('y')  # the labels are presented as 1D vector of
                                  # [int] labels
-        
+
         # end-snippet-1
-   
+
         # The SdA is an MLP, for which all weights of intermediate layers
         # are shared with a different denoising autoencoders
         # We will first construct the SdA as a deep multilayer perceptron,
@@ -299,23 +299,23 @@ class SdA_regress(object):
         # lead to chainging the weights of the MLP as well)
         # During finetunining we will finish training the SdA by doing
         # stochastich gradient descent on the MLP
-   
+
         # start-snippet-2
         for i in xrange(self.n_layers+1):
             # construct the sigmoidal layer
-   
+
             # the size of the input is either the number of hidden units of
             # the layer below or the input size if we are on the first layer
             if i == 0:
                 input_size = n_inp
             else:
                 input_size = hidden_layers_sizes[i - 1]
-            
+
             if i == self.n_layers:
                 output_size = n_out
             else:
                 output_size = hidden_layers_sizes[i]
-                
+
             # the input to this layer is either the activation of the hidden
             # layer below or the input of the SdA if you are on the first
             # layer
@@ -327,7 +327,7 @@ class SdA_regress(object):
             #    layer_input = self.sigmoid_layers[-1].output
             #elif i == len(hidden_layers_sizes_inp):
             #    layer_input = self.logistic_layer.output
-                
+
             if i < len(hidden_layers_sizes_inp):
                 sigmoid_layer = HiddenLayer(rng=numpy_rng,
                                             input=layer_input,
@@ -344,7 +344,7 @@ class SdA_regress(object):
                                             #input=self.h1,
                                             #n_in=input_size,
                                             #n_out=output_size,
-                                            #activation=T.nnet.sigmoid                                                                                       
+                                            #activation=T.nnet.sigmoid
                                             #)
                 sigmoid_layer = HiddenLayer(rng=numpy_rng,
                                             input=layer_input,
@@ -362,7 +362,7 @@ class SdA_regress(object):
                                             activation=T.nnet.sigmoid,
                                             W=theano.shared(self.SdA_out.dA_layers[-1*(i-len(hidden_layers_sizes_inp))].W.T.eval()),
                                             b=theano.shared(self.SdA_out.dA_layers[-1*(i-len(hidden_layers_sizes_inp))].b_prime.eval()))
-                
+
             # add the layer to our list of layers
             self.sigmoid_layers.append(sigmoid_layer)
             # its arguably a philosophical question...
@@ -371,14 +371,14 @@ class SdA_regress(object):
             # the visible biases in the dA are parameters of those
             # dA, but not the SdA
             self.params.extend(sigmoid_layer.params)
-   
+
             # Construct a denoising autoencoder that shared weights with this
-            # layer            
-      
+            # layer
+
         # end-snippet-2
         self.finetune_cost = self.sigmoid_layers[-1].mse(self.y)
         self.errors = self.sigmoid_layers[-1].mse(self.y)
-   
+
     def build_middle_pretrain(self, datasets, batch_size, learning_rate):
         (train_set_x, train_set_y) = datasets[0]
         (valid_set_x, valid_set_y) = datasets[1]
@@ -393,7 +393,7 @@ class SdA_regress(object):
         index = T.lscalar('index')  # index to a [mini]batch
 
         if 1: # for middle layer
-            
+
             fprop_inp = theano.function(
                 [],
                 self.SdA_inp.sigmoid_layers[-1].output,
@@ -410,7 +410,7 @@ class SdA_regress(object):
                 },
                 name='fprop_out'
             )
-            H1=fprop_out() 
+            H1=fprop_out()
             H2=fprop_out()
             H1=theano.shared(H1)
             H2=theano.shared(H2)
@@ -418,7 +418,7 @@ class SdA_regress(object):
             self.logreg_cost = self.log_reg.mse(self.h2)
 
             gparams = T.grad(self.logreg_cost, self.log_reg.params)
-    
+
             # compute list of fine-tuning updates
             updates = [
                 (param, param - gparam * learning_rate)
@@ -439,9 +439,9 @@ class SdA_regress(object):
                 },
                 name='train_middle'
             )
-        
+
         return train_fn_middle
-        
+
     def build_finetune_functions(self, datasets, batch_size, learning_rate):
         '''Generates a function `train` that implements one step of
         finetuning, a function `validate` that computes the error on
@@ -491,7 +491,7 @@ class SdA_regress(object):
 
         index = T.lscalar('index')  # index to a [mini]batch
         if 0: # for middle layer
-            
+
             fprop_inp = theano.function(
                 [],
                 self.SdA_inp.sigmoid_layers[-1].output,
@@ -508,7 +508,7 @@ class SdA_regress(object):
                 },
                 name='fprop_out'
             )
-            H1=fprop_out() 
+            H1=fprop_out()
             H2=fprop_out()
             H1=theano.shared(H1)
             H2=theano.shared(H2)
@@ -516,7 +516,7 @@ class SdA_regress(object):
             self.logreg_cost = self.log_reg.mse(self.h2)
 
             gparams = T.grad(self.logreg_cost, self.log_reg.params)
-    
+
             # compute list of fine-tuning updates
             updates = [
                 (param, param - gparam * learning_rate)
@@ -533,8 +533,8 @@ class SdA_regress(object):
                 },
                 name='train_middle'
             )
-        
-        
+
+
         # compute the gradients with respect to the model parameters
         gparams = T.grad(self.finetune_cost, self.params)
 
@@ -589,7 +589,7 @@ class SdA_regress(object):
         return train_fn, valid_score_i, test_score_i
 
 
-    
+
 def test_SdA_regress(finetune_lr=0.05, pretraining_epochs=10,
              pretrain_lr=0.1, training_epochs=10000,
              dataset='mnist.pkl.gz', batch_size=20):
@@ -642,13 +642,13 @@ def test_SdA_regress(finetune_lr=0.05, pretraining_epochs=10,
                   n_ins=392,
                   hidden_layers_sizes=[hidden_layer_size]
     )
-        
+
     # PRETRAINING THE MODEL #
     if 0 : # pretrain inp ae
         print '... getting the pretraining functions for INPUT AE'
         pretraining_fns = SdA_inp.pretraining_functions(train_set_x=train_set_x_unlab,
                                                     batch_size=batch_size)
-    
+
         print '... pre-training the model'
         start_time = time.clock()
         ## Pre-train layer-wise
@@ -664,9 +664,9 @@ def test_SdA_regress(finetune_lr=0.05, pretraining_epochs=10,
                              lr=pretrain_lr))
                 print 'Pre-training layer %i, epoch %d, cost ' % (i, epoch),
                 print numpy.mean(c)
-    
+
         end_time = time.clock()
-    
+
         print >> sys.stderr, ('The pretraining code for file ' +
                               os.path.split(__file__)[1] +
                               ' ran for %.2fm' % ((end_time - start_time) / 60.))
@@ -674,7 +674,7 @@ def test_SdA_regress(finetune_lr=0.05, pretraining_epochs=10,
         print '... getting the pretraining functions for OUTPUT AE'
         pretraining_fns = SdA_out.pretraining_functions(train_set_x=train_set_y_unlab,
                                                     batch_size=batch_size)
-    
+
         print '... pre-training the model'
         start_time = time.clock()
         ## Pre-train layer-wise
@@ -690,28 +690,28 @@ def test_SdA_regress(finetune_lr=0.05, pretraining_epochs=10,
                              lr=pretrain_lr))
                 print 'Pre-training layer %i, epoch %d, cost ' % (i, epoch),
                 print numpy.mean(c)
-    
+
         end_time = time.clock()
-    
+
         print >> sys.stderr, ('The pretraining code for file ' +
                               os.path.split(__file__)[1] +
                               ' ran for %.2fm' % ((end_time - start_time) / 60.))
-    
-        
+
+
     if 0: # save aes
         f=open('aes_shallow_sig_nobias.pkl', 'w+')
         import pickle
         pickle.dump(SdA_inp, f)
         pickle.dump(SdA_out, f)
         f.flush()
-        f.close() 
+        f.close()
     if 0: # load aes
         f=open('aes_shallow_sig_nobias.pkl', 'r')
         import pickle
         SdA_inp=pickle.load(f)
         SdA_out=pickle.load(f)
-        f.close()    
-   
+        f.close()
+
     if 1: # cca
         from dcca_numpy import netCCA_nobias, netCCA, dCCA
         from mlp_numpy import expit, logistic_prime, linear, linear_prime, relu, relu_prime, tanh, tanh_prime
@@ -777,18 +777,18 @@ def test_SdA_regress(finetune_lr=0.05, pretraining_epochs=10,
             pickle.dump(N, f)
             pickle.dump(N, f)
             f.flush()
-            f.close() 
+            f.close()
             if cnt == 200:
                 break
         for i in range(len(SdA_inp.dA_layers)):
             SdA_inp.dA_layers[i].W = theano.shared( N1.weights[i].T )
             SdA_inp.dA_layers[i].b = theano.shared( N1.biases[i][:,0] )
-        
+
         for i in range(len(SdA_out.dA_layers)):
             SdA_out.dA_layers[i].W = theano.shared( N2.weights[i].T )
             SdA_out.dA_layers[i].b = theano.shared( N2.weights[i][:,0] )
 
-        
+
     if 1 : # pretrain middle layer
         print '... pre-training MIDDLE layer'
 
@@ -814,7 +814,7 @@ def test_SdA_regress(finetune_lr=0.05, pretraining_epochs=10,
                 },
                 name='fprop_out'
             )
-            #H11=fprop_inp() 
+            #H11=fprop_inp()
             #H21=fprop_out()
             ##H1=N1.predict(train_set_x.eval())
             ##H2=N2.predict(train_set_y.eval())
@@ -826,7 +826,7 @@ def test_SdA_regress(finetune_lr=0.05, pretraining_epochs=10,
             logreg_cost = log_reg.mse(h2)
 
             gparams = T.grad(logreg_cost, log_reg.params)
-    
+
             # compute list of fine-tuning updates
             updates = [
                 (param, param - gparam * learning_rate)
@@ -847,7 +847,7 @@ def test_SdA_regress(finetune_lr=0.05, pretraining_epochs=10,
         while epoch < 10:
             print epoch, train_fn_middle()
             epoch += 1
-            
+
     sda = SdA_regress(
         SdA_inp,
         SdA_out,
@@ -860,7 +860,7 @@ def test_SdA_regress(finetune_lr=0.05, pretraining_epochs=10,
     )
     # end-snippet-3 start-snippet-4
     # end-snippet-4
-    
+
     # FINETUNING THE MODEL #
 
     # get the training, validation and testing function for the model
@@ -870,8 +870,8 @@ def test_SdA_regress(finetune_lr=0.05, pretraining_epochs=10,
         batch_size=batch_size,
         learning_rate=finetune_lr
     )
-    
-        
+
+
     print '... finetunning the model'
     # early-stopping parameters
     patience = 10 * n_train_batches_l  # look as this many examples regardless
