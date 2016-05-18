@@ -133,16 +133,11 @@ class SdAE(object):
         index = T.lscalar('index')  # index to a minibatch
         corruption_level = T.scalar('corruption')  # % of corruption to use
         learning_rate = T.scalar('lr')  # learning rate to use
-        # begining of a batch, given `index`
-        batch_begin = index * batch_size
-        # ending of a batch given `index`
-        batch_end = batch_begin + batch_size
 
         pretrain_fns = []
         for dA in self.dA_layers:
             # get the cost and the updates list
-            cost, updates = dA.get_cost_updates(corruption_level,##$
-                                                learning_rate)
+            cost, updates = dA.get_cost_updates(corruption_level, learning_rate)
             # compile the theano function
             fn = theano.function(
                 inputs=[
@@ -171,14 +166,13 @@ class SdAE(object):
         train_set_y=train_set_y.eval()
         train_set_y_lab=train_set_y[:1000]
 
-        import theano
         train_set_x=theano.shared(numpy.asarray(train_set_x_lab,
                                                     dtype=theano.config.floatX),
                                       borrow=True)
         train_set_y=theano.shared(numpy.asarray(train_set_y_lab,
                                                     dtype=theano.config.floatX),
                                       borrow=True)
-        train_set_y=T.cast(train_set_y_lab, 'int32')
+        train_set_y=T.cast(train_set_y, 'int32')
 
         # compute number of minibatches for training, validation and testing
         n_valid_batches = valid_set_x.get_value(borrow=True).shape[0]
@@ -254,69 +248,45 @@ class SdAE(object):
 def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
              pretrain_lr=0.05, training_epochs=10000,
              dataset='mnist.pkl.gz', batch_size=25, output_folder='models/sdae'):
-    """
-    Demonstrates how to train and test a stochastic denoising autoencoder.
 
-    This is demonstrated on MNIST.
-
-    :type learning_rate: float
-    :param learning_rate: learning rate used in the finetune stage
-    (factor for the stochastic gradient)
-
-    :type pretraining_epochs: int
-    :param pretraining_epochs: number of epoch to do pretraining
-
-    :type pretrain_lr: float
-    :param pretrain_lr: learning rate to be used during pre-training
-
-    :type n_iter: int
-    :param n_iter: maximal number of iterations ot run the optimizer
-
-    :type dataset: string
-    :param dataset: path the the cPickled dataset
-
-    """
     if not os.path.isdir(output_folder):
         os.makedirs(output_folder)
-
 
     datasets = load_data(dataset)
 
     train_set_x, train_set_y = datasets[0]
     valid_set_x, valid_set_y = datasets[1]
     test_set_x, test_set_y = datasets[2]
+
     train_set_x=train_set_x.eval()
     train_set_y=train_set_y.eval()
 
     train_set_x_lab=train_set_x[:1000,:]
-    train_set_x_unlab=train_set_x[1000:,:]
     train_set_y_lab=train_set_y[:1000]
-    train_set_y_unlab=train_set_y[1000:]
+    #---------------------------------------------------- lab for finetuning w/ logistic regression (1000 samples)
+    #---------------------------------------------------- unlab for pretraining (9000 samples)
+    train_set_x_unlab=train_set_x[1000:,:]
 
-    import theano
     train_set_x_lab=theano.shared(numpy.asarray(train_set_x_lab,
-                                                dtype=theano.config.floatX),
+                                 dtype=theano.config.floatX),
                                   borrow=True)
     train_set_y_lab=theano.shared(numpy.asarray(train_set_y_lab,
-                                                dtype=theano.config.floatX),
+                                  dtype=theano.config.floatX),
                                   borrow=True)
     train_set_y_lab=T.cast(train_set_y_lab, 'int32')
+
     train_set_x_unlab=theano.shared(numpy.asarray(train_set_x_unlab,
-                                                  dtype=theano.config.floatX),
+                                    dtype=theano.config.floatX),
                                     borrow=True)
-    train_set_y_unlab=theano.shared(numpy.asarray(train_set_y_unlab,
-                                                  dtype=theano.config.floatX),
-                                    borrow=True)
-    train_set_y_unlab=T.cast(train_set_y_unlab, 'int32')
+
 
     # compute number of minibatches for training, validation and testing
     n_train_batches = train_set_y_lab.eval().shape[0]
     n_train_batches /= batch_size
-    n_train_batches_u = train_set_y_unlab.eval().shape[0]
+    n_train_batches_u = train_set_x_unlab.eval().shape[0]
     n_train_batches_u /= batch_size
 
     # numpy random generator
-
     numpy_rng = numpy.random.RandomState(89677)
     print '... building the model'
     # construct the stacked denoising autoencoder class
@@ -346,14 +316,14 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
         for epoch in xrange(pretraining_epochs):
             # go through the training set
             c = []
-            for batch_index in xrange(n_train_batches):
+            for batch_index in xrange(n_train_batches_u):
                 c.append(pretraining_fns[i](index=batch_index,
                          corruption=corruption_levels[i],
                          lr=pretrain_lr))
             print 'Pre-training layer %i, epoch %d, cost ' % (i, epoch),
             print numpy.mean(c)
             mse_layer[i].append(numpy.mean(c))
-    with open(output_folder+'/S_pre_log.pkl', 'wb') as output:
+    with open(output_folder+'/pre_log.pkl', 'wb') as output:
         cPickle.dump(mse_layer, output, cPickle.HIGHEST_PROTOCOL)
 
 
@@ -372,9 +342,9 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
             name='fp'
         )
     Q=fprop()
-    print 'rec', ((Q-test_set_x.eval())**2).mean()
+    print 'reconstruction error on the test set', ((Q-test_set_x.eval())**2).mean()
 
-    with open(output_folder+'/SdAE_test_recon-pretrain.pkl', 'wb') as output:
+    with open(output_folder+'/test_recon-pretrain.pkl', 'wb') as output:
         cPickle.dump(Q, output, cPickle.HIGHEST_PROTOCOL)
 
     image = Image.fromarray(
@@ -385,7 +355,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
 
 
     # Build an MLP from the pretrained DAE
-    net = MLP(numpy_rng, train_set_x_lab, 28*14, hidden_layer_size, 28*14, W1=sda.dA_layers[0].W, b1=sda.dA_layers[0].b, W2=None, b2=None) #FIXME Change to 28x28
+    # net = MLP(numpy_rng, train_set_x_lab, 28*14, hidden_layer_size, 28*14, W1=sda.dA_layers[0].W, b1=sda.dA_layers[0].b, W2=None, b2=None) FIXME Why is this ?
     ########################
     ########################
     # FINETUNING THE MODEL #
@@ -478,9 +448,9 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
                           os.path.split(__file__)[1] +
                           ' ran for %.2fm' % ((end_time - start_time) / 60.))
 
-    with open(output_folder+'/SdAE_mnist.pkl', 'wb') as output:
+    with open(output_folder+'/mnist_sda.pkl', 'wb') as output:
         cPickle.dump(sda, output, cPickle.HIGHEST_PROTOCOL)
-    with open(output_folder+'/SdAE_fn_losses.pkl', 'wb') as output:
+    with open(output_folder+'/fn_losses.pkl', 'wb') as output:
         cPickle.dump({"train":fn, "val":fnv, "test": fnt, "noise":corruption_levels}, output, cPickle.HIGHEST_PROTOCOL)
 if __name__ == '__main__':
     test_SdAE()
