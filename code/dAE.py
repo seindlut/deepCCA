@@ -533,7 +533,12 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
 
         print 'Training epoch %d, cost ' % epoch, numpy.mean(c)
         mse_train.append(numpy.mean(c))
-        mse_test.append(numpy.mean(test_da()))
+        cc =[]
+        for ii in xrange(n_test_batches):
+            cc.append(test_da(ii))
+        print 'Training epoch %d, test cost ' % epoch, numpy.mean(cc)
+        mse_test.append(numpy.mean(cc))
+
     end_time = time.clock()
 
     training_time = (end_time - start_time)
