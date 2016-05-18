@@ -87,53 +87,7 @@ class dAE(object):
         bhid=None,
         bvis=None
     ):
-        """
-        Initialize the dA class by specifying the number of visible units (the
-        dimension d of the input ), the number of hidden units ( the dimension
-        d' of the latent or hidden space ) and the corruption level.
 
-        The constructor also receives symbolic variables for the input, weights and
-        bias. Such a symbolic variables are useful when, for example the input
-        is the result of some computations, or when weights are shared between
-        the dA and an MLP layer. When dealing with SdAs this always happens,
-        the dA on layer 2 gets as input the output of the dA on layer 1,
-        and the weights of the dA are used in the second stage of training
-        to construct an MLP.
-
-        :type numpy_rng: numpy.random.RandomState
-        :param numpy_rng: number random generator used to generate weights
-
-        :type theano_rng: theano.tensor.shared_randomstreams.RandomStreams
-        :param theano_rng: Theano random generator; if None is given one is
-                     generated based on a seed drawn from `rng`
-
-        :type input: theano.tensor.TensorType
-        :param input: a symbolic description of the input or None for
-                      standalone dA
-
-        :type n_visible: int
-        :param n_visible: number of visible units
-
-        :type n_hidden: int
-        :param n_hidden:  number of hidden units
-
-        :type W: theano.tensor.TensorType
-        :param W: Theano variable pointing to a set of weights that should be
-                  shared belong the dA and another architecture; if dA should
-                  be standalone set this to None
-
-        :type bhid: theano.tensor.TensorType
-        :param bhid: Theano variable pointing to a set of biases values (for
-                     hidden units) that should be shared belong dA and another
-                     architecture; if dA should be standalone set this to None
-
-        :type bvis: theano.tensor.TensorType
-        :param bvis: Theano variable pointing to a set of biases values (for
-                     visible units) that should be shared belong dA and another
-                     architecture; if dA should be standalone set this to None
-
-
-        """
         self.n_visible = n_visible
         self.n_hidden = n_hidden
 
@@ -453,7 +407,7 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
         theano_rng=theano_rng,
         input=x,
         n_visible= dim[0]*dim[1],
-        n_hidden=500
+        n_hidden=30
     )
 
     cost, updates = da.get_cost_updates(
@@ -508,13 +462,13 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
         tile_raster_images(X=da.W.get_value(borrow=True).T,
                            img_shape=dim, tile_shape=(10, 10),
                            tile_spacing=(1, 1)))
-    image.save(output_folder+'/filters_corruption_0.png')
-    with open(output_folder+'/unc_'+dataset+'.pkl', 'wb') as output:
+    image.save(output_folder+'/f30_filters_corruption_0.png')
+    with open(output_folder+'/f30_unc_'+dataset+'.pkl', 'wb') as output:
         cPickle.dump(da, output, cPickle.HIGHEST_PROTOCOL)
 
-    with open(output_folder+'/unc_log_train.pkl', 'wb') as output:
+    with open(output_folder+'/f30_unc_log_train.pkl', 'wb') as output:
         cPickle.dump(mse_log, output, cPickle.HIGHEST_PROTOCOL)
-    with open(output_folder+'/unc_log_test.pkl', 'wb') as output:
+    with open(output_folder+'/f30_unc_log_test.pkl', 'wb') as output:
         cPickle.dump(mse_test_log, output, cPickle.HIGHEST_PROTOCOL)
 
 
@@ -530,7 +484,7 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
         theano_rng=theano_rng,
         input=x,
         n_visible=dim[0]*dim[1],
-        n_hidden=500
+        n_hidden=30
     )
 
     cost, updates = da.get_cost_updates(
@@ -587,13 +541,13 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
     image.save(output_folder+'/filters_corruption_30.png')
 
     # Save the model for later use:
-    with open(output_folder+'/corr30_'+dataset+'.pkl', 'wb') as output:
+    with open(output_folder+'/f30_corr30_'+dataset+'.pkl', 'wb') as output:
         cPickle.dump(da, output, cPickle.HIGHEST_PROTOCOL)
 
-    with open(output_folder+'/corr30_log_train.pkl', 'wb') as output:
+    with open(output_folder+'/f30_corr30_log_train.pkl', 'wb') as output:
         cPickle.dump(mse_log, output, cPickle.HIGHEST_PROTOCOL)
 
-    with open(output_folder+'/corr30_log_test.pkl', 'wb') as output:
+    with open(output_folder+'/f30_corr30_log_test.pkl', 'wb') as output:
         cPickle.dump(mse_test_log, output, cPickle.HIGHEST_PROTOCOL)
 
 
