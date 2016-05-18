@@ -436,20 +436,20 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
     # TRAINING
     #--------------
     # go through training epochs
-    mse_train =[]
+    mse_trainin =[]
     mse_test = []
     for epoch in xrange(training_epochs):
         # go through trainng set
         c = []
         for batch_index in xrange(n_train_batches):
-            c.append(train_da(batch_index)/batch_size)
+            c.append(train_da(batch_index))
 
         print 'Training epoch %d, cost ' % epoch, numpy.mean(c)
         mse_train.append(numpy.mean(c))
         # ---------------------------------------------------------- Test
         cc =[]
         for ii in xrange(n_test_batches):
-            cc.append(test_da(ii)/batch_size)
+            cc.append(test_da(ii))
         print 'Training epoch %d, test cost ' % epoch, numpy.mean(cc)
         mse_test.append(numpy.mean(cc))
 
