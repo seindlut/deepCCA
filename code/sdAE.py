@@ -329,7 +329,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
             print 'Pre-training layer %i, epoch %d, cost ' % (i, epoch),
             print numpy.mean(c)
             mse.append(numpy.mean(c))
-        plt.plot(range(len(mse)), mse, label='layer %d'% str(i))
+        plt.plot(range(len(mse)), mse, label='layer %d'% (i))
     plt.xlabel('Epoch')
     plt.ylabel('Reconstruction error')
     plt.legend()

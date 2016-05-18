@@ -382,8 +382,8 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
     test_set_x, test_set_y = datasets[2]
 
     # compute number of minibatches for training, validation and testing
-    n_train_batches = train_set_x.get_value(borrow=True).shape[0] / batch_size
-    n_test_batches =  test_set_x.get_value(borrow=True).shape[0] / batch_size
+    n_train_batches = train_set_x.get_value(borrow=True).shape[0] // batch_size
+    n_test_batches =  test_set_x.get_value(borrow=True).shape[0] // batch_size
 
     # allocate symbolic variables for the data
     index = T.lscalar()    # index to a [mini]batch
