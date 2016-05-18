@@ -464,7 +464,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
     plt.plot(range(len(fnv)), fnv, label='validation')
     plt.plot(range(len(fnt)), fnt, label='test')
     plt.legend()
-    plt.xlabe("Epoch")
+    plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.savefig(output_folder+'/fn_losses.pdf')
 
