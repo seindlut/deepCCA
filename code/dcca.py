@@ -147,7 +147,7 @@ class CCALayer(HiddenLayer):
 
     def correlation(self, H1, H2):
         #H1 = self.output.T
-        m=10000
+        m = H1.shape[1]
         H1bar = H1 #- (1.0/m)*T.dot(H1, T.shared(numpy.ones((m,m))))
         H2bar = H2 #- (1.0/m)*T.dot(H1, T.ones_like(numpy.ones((m,m))))
         SigmaHat12 = (1.0/(m-1))*T.dot(H1bar, H2bar.T)
@@ -157,6 +157,7 @@ class CCALayer(HiddenLayer):
         SigmaHat22 = SigmaHat22 + self.r2*T.identity_like(SigmaHat22)
         Tval = T.dot(SigmaHat11**(-0.5), T.dot(SigmaHat12, SigmaHat22**(-0.5)))
         corr = T.nlinalg.trace(T.dot(Tval.T, Tval))**(0.5)
+        # Store the tensors for later use
         self.SigmaHat11 = SigmaHat11
         self.SigmaHat12 = SigmaHat12
         self.SigmaHat22 = SigmaHat22
@@ -254,9 +255,7 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
             x2: train_set_y
         }
     )
-
-
-     theano.printing.pydotprint(fprop_model2, outfile="models/dcca/model.png", var_with_name_simple=True)  
+    # theano.printing.pydotprint(fprop_model2, outfile="models/dcca/model.png", var_with_name_simple=True)
     ###############
     # TRAIN MODEL #
     ###############
@@ -295,9 +294,9 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
         H2 = h2cca.T
 
         corr1 = net1.correlation(H1,H2)
-        print corr1.eval()
+        print 'Net1 correlation : ', corr1.eval()
         corr2 = net2.correlation(H1,H2)
-        print corr2.eval()
+        print 'Net2 correlation: ',corr2.eval()
         assert(corr1.eval()==corr2.eval())
 
         train_model1 = theano.function(
