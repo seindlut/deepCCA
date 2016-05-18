@@ -81,6 +81,28 @@ class DCCA(MLP):
         self.output = self.lastLayer.output
         self.params = self.hiddenLayer.params + self.lastLayer.params
 
+    def get_updates(self, learning_rate=0.01):
+        m = 10000
+        U, V, D = theano.tensor.nlinalg.svd(self.lastLayer.Tval)
+        UVT = T.dot(U, V.T)
+        Delta12 = T.dot(self.lastLayer.SigmaHat11**(-0.5), T.dot(UVT, self.lastLayer.SigmaHat22**(-0.5)))
+        UDUT = T.dot(U, T.dot(D, U.T))
+        Delta11 = (-0.5) * T.dot(self.lastLayer.SigmaHat11**(-0.5), T.dot(UDUT, self.lastLayer.SigmaHat22**(-0.5)))
+        grad_E_to_o = (1.0/(m-1)) * (2*Delta11*self.lastLayer.H1bar+Delta12*self.lastLayer.H2bar)
+
+        # The gradients wrt the CCAlayer parametres (W & b)
+        gparam_W = (grad_E_to_o) * (self.lastLayer.output*(1-self.lastLayer.output)) * (self.hiddenLayer.output)
+        gparam_b = (grad_E_to_o) * (self.lastLayer.output*(1-self.lastLayer.output)) * theano.shared(numpy.array([1.0],dtype=theano.config.floatX), borrow=True)
+        gparams = [gparam_W, gparam_b.flatten()]
+
+        updates = [
+            (param, param - learning_rate * gparam)
+            for param, gparam in zip(self.lastLayer.params, gparams)
+        ]
+
+        return updates
+
+
 class CCALayer(HiddenLayer):
     def __init__(self, rng, input, n_in, n_out, W=None, b=None,
                  activation=T.nnet.sigmoid):
@@ -233,39 +255,8 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
         }
     )
 
-    # -------------------------------------- Backpropagation
 
-
-    def compute_grad(net):
-        m = 10000
-        U, V, D = theano.tensor.nlinalg.svd(net.lastLayer.Tval)
-        UVT = T.dot(U, V.T)
-        Delta12 = T.dot(net.lastLayer.SigmaHat11**(-0.5), T.dot(UVT, net.lastLayer.SigmaHat22**(-0.5)))
-        UDUT = T.dot(U, T.dot(D, U.T))
-        Delta11 = (-0.5) * T.dot(net.lastLayer.SigmaHat11**(-0.5), T.dot(UDUT, net.lastLayer.SigmaHat22**(-0.5)))
-        grad_E_to_o = (1.0/(m-1)) * (2*Delta11*net.lastLayer.H1bar+Delta12*net.lastLayer.H2bar)
-
-        # The gradients wrt the CCAlayer parametres (W & b)
-        gparam_W = (grad_E_to_o) * (net.lastLayer.output*(1-net.lastLayer.output)) * (net.hiddenLayer.output)
-        gparam_b = (grad_E_to_o) * (net.lastLayer.output*(1-net.lastLayer.output)) * theano.shared(numpy.array([1.0],dtype=theano.config.floatX), borrow=True)
-        gparams = [gparam_W, gparam_b.flatten()]
-
-        updates = [
-            (param, param - learning_rate * gparam)
-            for param, gparam in zip(net.lastLayer.params, gparams)
-        ]
-
-        print len(net.lastLayer.params)
-        for param, gparam in zip(net.lastLayer.params, gparams):
-            print param.type
-            print param.shape
-            print param.name
-            print gparam.type
-            print gparam.shape
-            print '------------'
-
-        return updates
-
+     theano.printing.pydotprint(fprop_model2, outfile="models/dcca/model.png", var_with_name_simple=True)  
     ###############
     # TRAIN MODEL #
     ###############
@@ -299,14 +290,9 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
         # -------------------------------- Forward
         h1hidden, h1cca = fprop_model1() # hidden and last layers outputs
         h2hidden, h2cca = fprop_model2()
-        h1hidden = h1hidden.T
-        h2hidden = h2hidden.T
-        h1cca = h1cca.T
-        h2cca = h2cca.T
-
         #compute cost(H1, H2)
-        H1 = h1cca
-        H2 = h2cca
+        H1 = h1cca.T
+        H2 = h2cca.T
 
         corr1 = net1.correlation(H1,H2)
         print corr1.eval()
@@ -314,34 +300,17 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
         print corr2.eval()
         assert(corr1.eval()==corr2.eval())
 
-        Tval = net1.lastLayer.Tval
-
-        updates1 = compute_grad(net1)
-        updates2 = compute_grad(net2)
-
-        h1tmp = theano.shared(numpy.asarray(net1.lastLayer.H1bar,dtype=theano.config.floatX),
-                                 borrow=True)
-        h2tmp = theano.shared(numpy.asarray(net2.lastLayer.H2bar,dtype=theano.config.floatX),
-                                 borrow=True)
-
         train_model1 = theano.function(
             inputs=[],
             outputs=[],
-            updates=updates1,
-            givens={
-                h1: h1tmp,
-                h2: h2tmp
-            }
+            updates=net1.get_updates(learning_rate=0.01),
+            givens={x1: train_set_x}
         )
         train_model2 = theano.function(
             inputs=[],
             outputs=[],
-            updates=updates2,
-            givens={
-                h1: h1tmp,
-                h2: h2tmp
-
-            }
+            updates=net2.get_updates(learning_rate=0.01),
+            givens={x2: train_set_x}
         )
 
         minibatch_avg_cost1 = train_model1()
