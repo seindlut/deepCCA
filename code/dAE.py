@@ -460,7 +460,7 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
                           ' ran for %.2fm' % ((training_time) / 60.))
     image = Image.fromarray(
         tile_raster_images(X=da.W.get_value(borrow=True).T,
-                           img_shape=dim, tile_shape=(10, 10),
+                           img_shape=dim, tile_shape=(6, 5),
                            tile_spacing=(1, 1)))
     image.save(output_folder+'/f30_filters_corruption_0.png')
     with open(output_folder+'/f30_unc_'+dataset+'.pkl', 'wb') as output:
@@ -536,7 +536,7 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
 
     image = Image.fromarray(tile_raster_images(
         X=da.W.get_value(borrow=True).T,
-        img_shape=dim, tile_shape=(10, 10),
+        img_shape=dim, tile_shape=(6,5),
         tile_spacing=(1, 1)))
     image.save(output_folder+'/filters_corruption_30.png')
 
