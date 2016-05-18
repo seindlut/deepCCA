@@ -317,7 +317,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
     sda = SdAE(
         numpy_rng=numpy_rng,
         n_ins=28 * 28,
-        hidden_layers_sizes=[500, 500],
+        hidden_layers_sizes=[400, 30],
         n_outs=10
     )
 
