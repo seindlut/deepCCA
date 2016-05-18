@@ -20,8 +20,8 @@ from six.moves import cPickle
 
 import matplotlib
 matplotlib.use('Agg')
-matplotlib.style.use('ggplot')
 import matplotlib.pyplot as plt
+matplotlib.style.use('ggplot')
 
 class SdAE(object):
     def __init__(

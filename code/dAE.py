@@ -45,8 +45,9 @@ from PIL import Image
 
 import matplotlib
 matplotlib.use('Agg')
-matplotlib.style.use('ggplot')
 import matplotlib.pyplot as plt
+matplotlib.style.use('ggplot')
+
 
 def Trelu(x): #-----------------------------------------Activation function
     return theano.tensor.switch(x<1e-06, 1e-06, x)
