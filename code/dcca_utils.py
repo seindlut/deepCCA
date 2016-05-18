@@ -3,6 +3,8 @@ from cca_linear import cca as CCA
 import numpy as np
 from numpy.linalg import inv, lstsq, cholesky
 from scipy.linalg import sqrtm
+import copy
+
 
 def order_cost(H1,H2):
     ''' Run linear CCA and return correlation'''
@@ -73,8 +75,10 @@ def cca(H1, H2):
     SigmaHat11_2=mat_pow(SigmaHat11).real.astype(np.float32)
     SigmaHat22_2=mat_pow(SigmaHat22).real.astype(np.float32)
 
-    TMP2 = stable_inverse_A_dot_Bneg1(SigmaHat12, sqrtm(SigmaHat22))#np.dot(SigmaHat12, SigmaHat22_2)
-    TMP3 = stable_inverse_A_dot_Bneg1_cholesky(SigmaHat12, sqrtm(SigmaHat22))#np.dot(SigmaHat12, SigmaHat22_2)
+    # TMP2 = stable_inverse_A_dot_Bneg1(SigmaHat12, sqrtm(SigmaHat22))
+    TMP2 = np.dot(SigmaHat12, SigmaHat22_2)
+    # TMP3 = stable_inverse_A_dot_Bneg1_cholesky(SigmaHat12, sqrtm(SigmaHat22))
+    TMP3 =np.dot(SigmaHat12, SigmaHat22_2)
 
     Tval = stable_inverse_Aneg1_dot_B(sqrtm(SigmaHat11), TMP2)
     Tval3 = stable_inverse_Aneg1_dot_B_cholesky(sqrtm(SigmaHat11), TMP3)
@@ -100,14 +104,16 @@ def cca_prime(H1, H2):
     SigmaHat22 = SigmaHat22 + r1*np.identity(SigmaHat22.shape[0], dtype=np.float32)
     SigmaHat11_2=mat_pow(SigmaHat11).real.astype(np.float32)
     SigmaHat22_2=mat_pow(SigmaHat22).real.astype(np.float32)
-    TMP3 = stable_inverse_A_dot_Bneg1_cholesky(SigmaHat12, sqrtm(SigmaHat22))
-    Tval = stable_inverse_Aneg1_dot_B_cholesky(sqrtm(SigmaHat11), TMP3)
+    # TMP3 = stable_inverse_A_dot_Bneg1_cholesky(SigmaHat12, sqrtm(SigmaHat22))
+    # TMP3= np.dot(SigmaHat12, SigmaHat22_2)
+    # Tval = stable_inverse_Aneg1_dot_B_cholesky(sqrtm(SigmaHat11), TMP3)
+    Tval = np.dot(SigmaHat11_2, np.dot(SigmaHat12, SigmaHat22_2))
     U, D, V, = np.linalg.svd(Tval)
-    D=np.diag(D)
-    UVT = np.dot(U, V)
+    D = np.diag(D)
+    UVT = np.dot(U, V.T)
     Delta12 = np.dot(SigmaHat11_2, np.dot(UVT, SigmaHat22_2))
     UDUT = np.dot(U, np.dot(D, U.T))
     Delta11 = (-0.5) * np.dot(SigmaHat11_2, np.dot(UDUT, SigmaHat11_2))
-    grad_E_to_o = (1.0/m) * (2*np.dot(Delta11,H1bar)+np.dot(Delta12,H2bar))
+    grad_E_to_o = (1.0/(m-1))* (2*np.dot(Delta11,H1bar)+np.dot(Delta12,H2bar))
 
-    return -1.0*grad_E_to_o.T##np.real(grad_E_to_o.real).T
+    return -1.0*grad_E_to_o.T

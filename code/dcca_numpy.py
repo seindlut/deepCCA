@@ -157,7 +157,7 @@ class netCCA(object):
         self.weights_batch[0] += (np.outer(self.errors[1],self.outputs[0])+0.00001*self.weights[0])
         self.biases_batch[0] += self.errors[1] + +0.00001*self.biases[0]
 
-    def train(self,n_iter, learning_rate=1):
+    def train(self,n_iter, learning_rate=.1):
         #Updates the weights after comparing each input in X with y
         #repeats this process n_iter times.
         self.learning_rate=learning_rate
@@ -189,7 +189,7 @@ class dCCA(object):
         self.X1 = X1
         self.X2 = X2
         self.A1=np.eye(netCCA1.sizes[-1])
-        self.A2=np.eye(netCCA1.sizes[-1])
+        self.A2=np.eye(netCCA2.sizes[-1])
 
     def predict_x1(self, X1):
         return self.netCCA1.predict(X1)
@@ -206,18 +206,18 @@ class dCCA(object):
             H2 = self.netCCA2.predict(self.X2)
 
             self.A1, self.A2, _H1, _H2 = CCA(H1,H2)
-            # _H1 = np.dot(H1, self.A1)
-            # _H2 = np.dot(H2, self.A2)
-            print '--------------'
-            print 'A1 :',A1.shape
-            print 'H1 :',H1.shape
-            print '_H1 :',_H1.shape
-            print 'W :', self.netCCA1.weights[0].shape
-            print '--------------'
+            print repeat, 'correlation : ', cor_cost(_H1, _H2)
 
+            H01_rec = np.tanh(_H1.dot(self.netCCA1.weights[1]))
+            H02_rec = np.tanh(_H2.dot(self.netCCA2.weights[1]))
+            print 'H01 shape : ', H01_rec.shape
+            print 'H02 shape : ', H02_rec.shape
 
-            X1_rec = np.tanh(H1.dot(self.netCCA1.weights[0]))
-            X2_rec = np.tanh(H2.dot(self.netCCA2.weights[0]))
+            X1_rec = np.tanh(H01_rec.dot(self.netCCA1.weights[0]))
+            X2_rec = np.tanh(H02_rec.dot(self.netCCA2.weights[0]))
+            print 'X1 shape : ', X1_rec.shape
+            print 'X2 shape : ', X2_rec.shape
+
             print repeat, 'mse1:', np.mean((X1_rec-self.X1)**2.0)
             print repeat, 'mse2:', np.mean((X2_rec-self.X2)**2.0)
 
@@ -227,10 +227,6 @@ class dCCA(object):
             #else:
             self.netCCA2.update_weights_batch(self.X2, H2, H1, self.learning_rate)
             self.netCCA2._update_weights()
-            #H1 = self.netCCA1.predict(self.X1)
-            #H2 = self.netCCA2.predict(self.X2)
-            #self.A1, self.A2, _H1, _H2 = CCA(H1,H2)
-            #print repeat, cor_cost(_H1, _H2)
 
 def test_regression():
     # Loading the data
@@ -240,8 +236,8 @@ def test_regression():
     valid_set_x, valid_set_y = datasets[1]
     test_set_x, test_set_y = datasets[2]
 
-    train_set_x = train_set_x.eval()
-    train_set_y = train_set_y.eval()
+    train_set_x = train_set_x.eval()[:1000,:]
+    train_set_y = train_set_y.eval()[:1000,:]
 
     test_set_x = test_set_x.eval()
     test_set_y = test_set_y.eval()
@@ -249,13 +245,17 @@ def test_regression():
     valid_set_x = valid_set_x.eval()
     valid_set_y = valid_set_y.eval()
 
+    print 'X shape:',train_set_x.shape
+    print 'Y shape:',train_set_y.shape
+
+    print '...building the model'
     param1=((train_set_x.shape[1],0,0),(500, expit, logistic_prime),(50, expit, logistic_prime))
     param2=((train_set_y.shape[1],0,0),(500, expit, logistic_prime),(50, expit, logistic_prime))
 
     N1=netCCA(train_set_x,param1)
     N2=netCCA(train_set_y,param2)
     N = dCCA(train_set_x, train_set_y, N1, N2)
-
+    N.train(10, learning_rate=.01)
 
 if __name__ == '__main__':
     test_regression()
