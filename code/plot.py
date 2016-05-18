@@ -57,10 +57,18 @@ recon = Image.fromarray(z)
 original = Image.fromarray(x)
 np.mean(z-x)
 diff = Image.fromarray(z-x)
-plt.imshow(diff)
-plt.imshow(original)
+f, (ax1, ax2, ax3) = plt.subplots(1,3,figsize=(10,4))
+ax1.imshow(original)
+ax1.axis('off')
+ax1.set_title('original')
+ax2.imshow(recon)
+ax2.set_title('Reconstructed')
+ax2.axis('off')
+ax3.imshow(diff)
+ax3.set_title('Difference')
+ax3.axis('off')
+plt.savefig('models/dae/illust.png',bbox_inches='tight')
 
-plt.imshow(recon)
 
 
 ''''
