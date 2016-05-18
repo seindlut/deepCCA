@@ -29,6 +29,7 @@
    Systems 19, 2007
 
 """
+from __future__ import division
 from utils import *
 import os
 import sys
@@ -238,11 +239,6 @@ class dAE(object):
         z = self.get_reconstructed_input(y)
         return T.mean((z-self.x)**2)
 
-    def test_recon(self, corruption_level):
-        tilde_x = self.get_corrupted_input(self.x, corruption_level)
-        y = self.get_hidden_values(tilde_x)
-        z = self.get_reconstructed_input(y)
-        return z
 
 
 """ Same dAE without bias terms """
@@ -354,11 +350,6 @@ class dAE_nobias(object):
         z = self.get_reconstructed_input(y)
         return T.mean((z-self.x)**2)
 
-    def test_recon(self, corruption_level):
-        tilde_x = self.get_corrupted_input(self.x, corruption_level)
-        y = self.get_hidden_values(tilde_x)
-        z = self.get_reconstructed_input(y)
-        return z
 
 
 def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=64, output_folder='models/dae'):
@@ -392,6 +383,7 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
 
     # compute number of minibatches for training, validation and testing
     n_train_batches = train_set_x.get_value(borrow=True).shape[0] / batch_size
+    n_test_batches =  test_set_x.get_value(borrow=True).shape[0] / batch_size
 
     # allocate symbolic variables for the data
     index = T.lscalar()    # index to a [mini]batch
@@ -430,10 +422,10 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
     )
 
     test_da = theano.function(
-        [],
-        da.mse_test_recon(corruption_level=0.),
+        [index],
+        da.mse_test_recon(0.),
         givens={
-            x: test_set_x[:]
+            x: test_set_x[index * batch_size: (index + 1) * batch_size]
         }
     )
 
@@ -444,17 +436,22 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
     # TRAINING
     #--------------
     # go through training epochs
-    mse_log =[]
-    mse_test_log = []
+    mse_train =[]
+    mse_test = []
     for epoch in xrange(training_epochs):
         # go through trainng set
         c = []
         for batch_index in xrange(n_train_batches):
-            c.append(train_da(batch_index))
+            c.append(train_da(batch_index)/batch_size)
 
         print 'Training epoch %d, cost ' % epoch, numpy.mean(c)
-        mse_log.append(numpy.mean(c))
-        mse_test_log.append(numpy.mean(test_da()))
+        mse_train.append(numpy.mean(c))
+        # ---------------------------------------------------------- Test
+        cc =[]
+        for ii in xrange(n_test_batches):
+            cc.append(test_da(ii)/batch_size)
+        print 'Training epoch %d, test cost ' % epoch, numpy.mean(cc)
+        mse_test.append(numpy.mean(cc))
 
     end_time = time.clock()
 
@@ -465,8 +462,8 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
                           ' ran for %.2fm' % ((training_time) / 60.))
 
     plt.figure(figsize=(6,4))
-    plt.plot(range(len(mse_log)), mse_log, label ='Train')
-    plt.plot(range(len(mse_test_log)), mse_test_log, label ='Test')
+    plt.plot(range(len(mse_train)), mse_train, label ='Train')
+    plt.plot(range(len(mse_test)), mse_test, label ='Test')
     plt.xlabel("Epoch")
     plt.ylabel("MSE")
     plt.legend()
@@ -513,10 +510,10 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
     )
 
     test_da = theano.function(
-        [],
-        da.mse_test_recon(corruption_level=0.3),
+        [index],
+        da.mse_test_recon(0.3),
         givens={
-            x: test_set_x[:]
+            x: test_set_x[index * batch_size: (index + 1) * batch_size]
         }
     )
 
@@ -525,8 +522,8 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
     ############
     # TRAINING #
     ############
-    mse_log =[]
-    mse_test_log =[]
+    mse_train =[]
+    mse_test =[]
     # go through training epochs
     for epoch in xrange(training_epochs):
         # go through trainng set
@@ -535,8 +532,8 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
             c.append(train_da(batch_index))
 
         print 'Training epoch %d, cost ' % epoch, numpy.mean(c)
-        mse_log.append(numpy.mean(c))
-        mse_test_log.append(numpy.mean(test_da()))
+        mse_train.append(numpy.mean(c))
+        mse_test.append(numpy.mean(test_da()))
     end_time = time.clock()
 
     training_time = (end_time - start_time)
@@ -546,8 +543,8 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
                           ' ran for %.2fm' % (training_time / 60.))
 
     plt.figure(figsize=(6,4))
-    plt.plot(range(len(mse_log)), mse_log, label ='Train')
-    plt.plot(range(len(mse_test_log)), mse_test_log, label ='Test')
+    plt.plot(range(len(mse_train)), mse_train, label ='Train')
+    plt.plot(range(len(mse_test)), mse_test, label ='Test')
     plt.xlabel("Epoch")
     plt.ylabel("MSE")
     plt.legend()
