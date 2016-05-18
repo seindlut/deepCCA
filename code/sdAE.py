@@ -94,14 +94,21 @@ class SdAE(object):
                           bhid=sigmoid_layer.b)
             self.dA_layers.append(dA_layer)
 
+
+
+        # ----------------------------------------------------------------- Forward
         inp = self.x
         for i in xrange(self.n_layers):
-            inp=self.dA_layers[i].get_hidden_values(inp)
+            inp = self.dA_layers[i].get_hidden_values(inp)
+        # ----------------------------------------------------------------  Backward
         for i in xrange(self.n_layers):
             inp=self.dA_layers[self.n_layers-i-1].get_reconstructed_input(inp)
-        # FIXME Output is the reconstructed input
+
+        # HACK : Output is the reconstructed input
         self.output = inp
 
+
+        # ----------------------------------------------------------- Logistic regression
         # We now need to add a logistic layer on top of the MLP
         self.logLayer = LogisticRegression(
             input=self.sigmoid_layers[-1].output,
@@ -146,7 +153,7 @@ class SdAE(object):
                 outputs=cost,
                 updates=updates,
                 givens={
-                    self.x: train_set_x[batch_begin: batch_end]
+                    self.x: train_set_x[index * batch_size: (index +1) * batch_size]
                 }
             )
             # append `fn` to the list of functions
@@ -317,7 +324,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
     sda = SdAE(
         numpy_rng=numpy_rng,
         n_ins=28 * 28,
-        hidden_layers_sizes=[400, 30],
+        hidden_layers_sizes=[400, 200, 50],
         n_outs=10
     )
 
@@ -346,7 +353,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
             print 'Pre-training layer %i, epoch %d, cost ' % (i, epoch),
             print numpy.mean(c)
             mse_layer[i].append(numpy.mean(c))
-    with open(output_folder+'/SdAE_mnist_pre_log.pkl', 'wb') as output:
+    with open(output_folder+'/S_pre_log.pkl', 'wb') as output:
         cPickle.dump(mse_layer, output, cPickle.HIGHEST_PROTOCOL)
 
 

@@ -17,10 +17,10 @@ SET = test_set_x.get_value(borrow=True)
 
 ''' Uncorrupted '''
 
-with open('models/dae/dAE_mnist_log.pkl', 'rb') as input:
+with open('models/dae/f30_unc_log_train.pkl', 'rb') as input:
     mse_log = cPickle.load(input)
 
-with open('models/dae/dAE_mnist_test_log.pkl', 'rb') as input:
+with open('models/dae/f30_unc_log_train.pkl', 'rb') as input:
     mse_log_test = cPickle.load(input)
 
 plt.figure(figsize=(6,4))
@@ -49,7 +49,7 @@ print 'final train: ',mse_log[-1]
 
 
 
-with open('models/dae/dAE_test_0.pkl', 'rb') as input:
+with open('models/dae/f30_unc_test0.pkl', 'rb') as input:
     z = cPickle.load(input)
 z = z.reshape((28,28))*255
 x = SET[0,:].reshape((28,28))*255
