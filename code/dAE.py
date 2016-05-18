@@ -436,7 +436,7 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
     # TRAINING
     #--------------
     # go through training epochs
-    mse_trainin =[]
+    mse_train =[]
     mse_test = []
     for epoch in xrange(training_epochs):
         # go through trainng set
