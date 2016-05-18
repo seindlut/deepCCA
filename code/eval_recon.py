@@ -12,7 +12,7 @@ datasets = load_data('mnist.pkl.gz')
 test_set_x, test_set_y = datasets[2]
 
 """ DAE """
-with open('models/dae/dAE_mnist_corrupted_full.pkl', 'rb') as input:
+with open('models/dae/f30_unc_full.pkl', 'rb') as input:
     da = cPickle.load(input)
 
 index = T.lscalar()
@@ -34,5 +34,5 @@ test_da = theano.function(
 
 z = test_da(0)
 # for plotting
-with open('models/dae/dAE_test_0.pkl', 'wb') as output:
+with open('models/dae/f30_unc_test0.pkl', 'wb') as output:
     cPickle.dump(z, output, cPickle.HIGHEST_PROTOCOL)
