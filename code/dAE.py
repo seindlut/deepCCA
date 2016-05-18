@@ -34,15 +34,19 @@ import os
 import sys
 import time
 import numpy
+
 import theano
 import theano.tensor as T
 from theano.tensor.shared_randomstreams import RandomStreams
 from logistic_sgd import load_data
-# import pickle
+
 from six.moves import cPickle
 from PIL import Image
 
-
+import matplotlib
+matplotlib.use('Agg')
+matplotlib.style.use('ggplot')
+import matplotlib.pyplot as plt
 
 def Trelu(x): #-----------------------------------------Activation function
     return theano.tensor.switch(x<1e-06, 1e-06, x)
@@ -458,18 +462,24 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
     print >> sys.stderr, ('The no corruption code for file ' +
                           os.path.split(__file__)[1] +
                           ' ran for %.2fm' % ((training_time) / 60.))
+
+    plt.figure(figsize=(6,4))
+    plt.plot(range(len(mse_log)), mse_log, label ='Train')
+    plt.plot(range(len(mse_test_log)), mse_test_log, label ='Test')
+    plt.xlabel("Epoch")
+    plt.ylabel("MSE")
+    plt.legend()
+    plt.savefig(output_folder+'/f30_unc_log_train.pdf',bbox_inches='tight')
+
     image = Image.fromarray(
         tile_raster_images(X=da.W.get_value(borrow=True).T,
                            img_shape=dim, tile_shape=(6, 5),
                            tile_spacing=(1, 1)))
     image.save(output_folder+'/f30_filters_corruption_0.png')
+
     with open(output_folder+'/f30_unc_'+dataset+'.pkl', 'wb') as output:
         cPickle.dump(da, output, cPickle.HIGHEST_PROTOCOL)
 
-    with open(output_folder+'/f30_unc_log_train.pkl', 'wb') as output:
-        cPickle.dump(mse_log, output, cPickle.HIGHEST_PROTOCOL)
-    with open(output_folder+'/f30_unc_log_test.pkl', 'wb') as output:
-        cPickle.dump(mse_test_log, output, cPickle.HIGHEST_PROTOCOL)
 
 
     #-------------------------------------------------
@@ -534,21 +544,24 @@ def test_dAE(learning_rate=0.1, training_epochs=100, dataset='full', batch_size=
                           os.path.split(__file__)[1] +
                           ' ran for %.2fm' % (training_time / 60.))
 
+    plt.figure(figsize=(6,4))
+    plt.plot(range(len(mse_log)), mse_log, label ='Train')
+    plt.plot(range(len(mse_test_log)), mse_test_log, label ='Test')
+    plt.xlabel("Epoch")
+    plt.ylabel("MSE")
+    plt.legend()
+    plt.savefig(output_folder+'/f30_corr30_log_train.pdf',bbox_inches='tight')
+
+
     image = Image.fromarray(tile_raster_images(
         X=da.W.get_value(borrow=True).T,
         img_shape=dim, tile_shape=(6,5),
         tile_spacing=(1, 1)))
-    image.save(output_folder+'/filters_corruption_30.png')
+    image.save(output_folder+'/filters_corr30.png')
 
     # Save the model for later use:
     with open(output_folder+'/f30_corr30_'+dataset+'.pkl', 'wb') as output:
         cPickle.dump(da, output, cPickle.HIGHEST_PROTOCOL)
-
-    with open(output_folder+'/f30_corr30_log_train.pkl', 'wb') as output:
-        cPickle.dump(mse_log, output, cPickle.HIGHEST_PROTOCOL)
-
-    with open(output_folder+'/f30_corr30_log_test.pkl', 'wb') as output:
-        cPickle.dump(mse_test_log, output, cPickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':

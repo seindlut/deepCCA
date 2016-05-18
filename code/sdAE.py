@@ -2,20 +2,26 @@ import os
 import sys
 import time
 import numpy
+
 import theano
 import theano.tensor as T
 from theano.tensor.shared_randomstreams import RandomStreams
 from theano.compile.io import In
+
 from logistic_sgd import LogisticRegression, load_data
 from mlp import HiddenLayer
 from dAE import dAE
 from mlp import MLP
+
 from utils import tile_raster_images,plot_weights
 from PIL import Image
 from six.moves import cPickle
-import matplotlib.pyplot as plt
+
+
 import matplotlib
+matplotlib.use('Agg')
 matplotlib.style.use('ggplot')
+import matplotlib.pyplot as plt
 
 class SdAE(object):
     def __init__(
@@ -309,9 +315,9 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
     start_time = time.clock()
     ## Pre-train layer-wise
     corruption_levels = [0.1, 0.2, 0.3]
-    mse_layer = {}
+    plt.figure(figsize=(6,4))
     for i in xrange(sda.n_layers):
-        mse_layer[i] = []
+        mse = []
         # go through pretraining epochs
         for epoch in xrange(pretraining_epochs):
             # go through the training set
@@ -322,10 +328,12 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
                          lr=pretrain_lr))
             print 'Pre-training layer %i, epoch %d, cost ' % (i, epoch),
             print numpy.mean(c)
-            mse_layer[i].append(numpy.mean(c))
-    with open(output_folder+'/pre_log.pkl', 'wb') as output:
-        cPickle.dump(mse_layer, output, cPickle.HIGHEST_PROTOCOL)
-
+            mse.append(numpy.mean(c))
+        plt.plot(range(len(mse)), mse, label='layer %d'% str(i))
+    plt.xlabel('Epoch')
+    plt.ylabel('Reconstruction error')
+    plt.legend()
+    plt.savefig(output_folder+'/pre_log.pdf',bbox_inches='tight')
 
 
     end_time = time.clock()
@@ -344,7 +352,7 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
     Q=fprop()
     print 'reconstruction error on the test set', ((Q-test_set_x.eval())**2).mean()
 
-    with open(output_folder+'/test_recon-pretrain.pkl', 'wb') as output:
+    with open(output_folder+'/test_recon_pre.pkl', 'wb') as output:
         cPickle.dump(Q, output, cPickle.HIGHEST_PROTOCOL)
 
     image = Image.fromarray(
@@ -450,7 +458,15 @@ def test_SdAE(finetune_lr=0.1, pretraining_epochs=100,
 
     with open(output_folder+'/mnist_sda.pkl', 'wb') as output:
         cPickle.dump(sda, output, cPickle.HIGHEST_PROTOCOL)
-    with open(output_folder+'/fn_losses.pkl', 'wb') as output:
-        cPickle.dump({"train":fn, "val":fnv, "test": fnt, "noise":corruption_levels}, output, cPickle.HIGHEST_PROTOCOL)
+
+    plt.figure(figsize =(6,4))
+    plt.plot(range(len(fn)), fn, label='train')
+    plt.plot(range(len(fnv)), fnv, label='validation')
+    plt.plot(range(len(fnt)), fnt, label='test')
+    plt.legend()
+    plt.xlabe("Epoch")
+    plt.ylabel("Loss")
+    plt.savefig(output_folder+'/fn_losses.pdf')
+
 if __name__ == '__main__':
     test_SdAE()
