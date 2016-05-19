@@ -1,5 +1,5 @@
 OPTFLAGS = -O3 -march=nocona -mfpmath=sse -msse3 -Wuninitialized -flto
-CFLAGS = -std=c++0x -I/usr/nikola/pkgs/intel/.2011.2.137/mkl/include -I/g/ssli/software/pkgs/boost_1_49_0 -c -DNDEBUG -D__LINUX $(OPTFLAGS) 
+CFLAGS = -std=c++0x -c -DNDEBUG -D__LINUX $(OPTFLAGS) 
 CPP = g++
 
 MKLLINKFLAGS = -Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
