@@ -17,110 +17,57 @@ def mat_pow(matrix):
     return scipy.linalg.sqrtm(numpy.linalg.inv(matrix))
 
 
-class DCCA(MLP):
-    def __init__(self, rng, input, n_in, n_hidden, n_out):
-        self.hiddenLayer = HiddenLayer(
-            rng=rng,
-            input=input,
-            n_in=n_in,
-            n_out=n_hidden,
-            activation=T.nnet.sigmoid,
-        )
+class dCCA(object):
+    def __init__(self,rng, net1, net2):
+        self.net1 = net1
+        self.net2 = net2
 
-        self.lastLayer = CCALayer(
-            rng=rng,
-            input=self.hiddenLayer.output,
-            n_in=n_hidden,
-            n_out=n_out,
-            activation=T.nnet.sigmoid
-        )
-
-        self.L1 = (
-            abs(self.hiddenLayer.W).sum()
-            + abs(self.lastLayer.W).sum()
-        )
-
-        self.L2_sqr = (
-            (self.hiddenLayer.W ** 2).sum()
-            + (self.lastLayer.W ** 2).sum()
+        self.cca = CCALayer(
+            input1=self.net1.output,
+            input2=self.net2.output,
         )
 
         self.correlation = (
-            self.lastLayer.correlation
-        )
-        self.correlation_numpy = (
-            self.lastLayer.correlation_numpy
+            self.cca.correlation
         )
 
-        self.output = self.lastLayer.output
-        self.params = self.hiddenLayer.params + self.lastLayer.params
+        self.params = self.net1.params + self.net2.params
 
     def get_updates(self, learning_rate=0.01):
         m = 10000
-        U, V, D = theano.tensor.nlinalg.svd(self.lastLayer.Tval)
+        U, V, D = theano.tensor.nlinalg.svd(self.cca.Tval)
         UVT = T.dot(U, V.T)
-        Delta12 = T.dot(self.lastLayer.SigmaHat11**(-0.5), T.dot(UVT, self.lastLayer.SigmaHat22**(-0.5)))
         UDUT = T.dot(U, T.dot(D, U.T))
-        Delta11 = (-0.5) * T.dot(self.lastLayer.SigmaHat11**(-0.5), T.dot(UDUT, self.lastLayer.SigmaHat22**(-0.5)))
-        grad_E_to_o = (1.0/(m-1)) * (2*Delta11*self.lastLayer.H1bar+Delta12*self.lastLayer.H2bar)
+
+        Delta12 = T.dot(self.cca.SigmaHat11_2, T.dot(UVT, self.cca.SigmaHat22_2))
+        Delta11 = -.5* T.dot(self.cca.SigmaHat11_2, T.dot(UDUT, self.cca.SigmaHat11_2))
+        Delta22 = -.5* T.dot(self.cca.SigmaHat22_2, T.dot(UDUT, self.cca.SigmaHat22_2))
+        grad_E_to_o = (1.0/(m-1)) * (2*Delta11*self.cca.H1bar+Delta12*self.cca.H2bar)
 
         # The gradients wrt the CCAlayer parametres (W & b)
-        gparam_W = (grad_E_to_o) * (self.lastLayer.output*(1-self.lastLayer.output)) * (self.hiddenLayer.output)
-        gparam_b = (grad_E_to_o) * (self.lastLayer.output*(1-self.lastLayer.output)) * theano.shared(numpy.array([1.0],dtype=theano.config.floatX), borrow=True)
+        gparam_W = (grad_E_to_o) * (self.cca.output*(1-self.cca.output)) * (self.hiddenLayer.output)
+        gparam_b = (grad_E_to_o) * (self.cca.output*(1-self.cca.output)) * theano.shared(numpy.array([1.0],dtype=theano.config.floatX), borrow=True)
         gparams = [gparam_W, gparam_b.flatten()]
 
         updates = [
             (param, param - learning_rate * gparam)
-            for param, gparam in zip(self.lastLayer.params, gparams)
+            for param, gparam in zip(self.cca.params, gparams)
         ]
 
         return updates
 
 
 class CCALayer(HiddenLayer):
-    def __init__(self, rng, input, n_in, n_out, W=None, b=None,
-                 activation=T.nnet.sigmoid):
-
-        self.n_in = n_in
-        self.n_out = n_out
-        self.input = input
-        self.activation = activation
+    def __init__(self, input1, input2):
+        self.input1 = input1
+        self.input2 = input2
 
         self.r1 = 0.001
         self.r2 = 0.001
 
-        if W is None:
-            W_values = numpy.asarray(
-                rng.uniform(
-                    low=-numpy.sqrt(6. / (n_in + n_out)),
-                    high=numpy.sqrt(6. / (n_in + n_out)),
-                    size=(n_in, n_out)
-                ),
-                dtype=theano.config.floatX
-            )
-            if activation == theano.tensor.nnet.sigmoid:
-                W_values *= 4
-
-            W = theano.shared(value=W_values, name='W', borrow=True)
-
-        if b is None:
-            b_values = numpy.zeros((n_out,), dtype=theano.config.floatX)
-            b = theano.shared(value=b_values, name='b', borrow=True)
-
-        self.W = W
-        self.b = b
-
-        lin_output = T.dot(input, self.W) + self.b
-        self.output = (
-            lin_output if self.activation is None
-            else self.activation(lin_output)
-        )
-
-        self.params = [self.W, self.b]
-        # self.params = [self.W]
-
-    def correlation(self, H1, H2):
-        #H1 = self.output.T
+    def correlation(self):
+        H1 = self.input1.T
+        H2 = self.input2.T
         m = H1.shape[1]
         H1bar = H1 #- (1.0/m)*T.dot(H1, T.shared(numpy.ones((m,m))))
         H2bar = H2 #- (1.0/m)*T.dot(H1, T.ones_like(numpy.ones((m,m))))
@@ -129,32 +76,20 @@ class CCALayer(HiddenLayer):
         SigmaHat11 = SigmaHat11 + self.r1*T.identity_like(SigmaHat11)
         SigmaHat22 = (1.0/(m-1))*T.dot(H2bar, H2bar.T)
         SigmaHat22 = SigmaHat22 + self.r2*T.identity_like(SigmaHat22)
-        Tval = T.dot(SigmaHat11**(-0.5), T.dot(SigmaHat12, SigmaHat22**(-0.5)))
+        # Square root of matrices:#FIXME
+        SigmaHat11_2 = SigmaHat11**(-0.5)
+        SigmaHat22_2 = SigmaHat22**(-0.5)
+
+        Tval = T.dot(SigmaHat11_2, T.dot(SigmaHat12, SigmaHat22_2))
         corr = T.nlinalg.trace(T.dot(Tval.T, Tval))**(0.5)
         # Store the tensors for later use
-        self.SigmaHat11 = SigmaHat11
-        self.SigmaHat12 = SigmaHat12
+        self.SigmaHat11_2 = SigmaHat11_2
+        self.SigmaHat12_2 = SigmaHat12_2
         self.SigmaHat22 = SigmaHat22
         self.H1bar = H1bar
         self.H2bar = H2bar
         self.Tval = Tval
         return -1*corr
-
-    def correlation_numpy(self, H1, H2):
-        m = H1.shape[1]
-
-        H1bar = H1#.eval() #- (1.0/m)*numpy.dot(H1, numpy.ones((m,m), dtype=numpy.float32))
-        H2bar = H2#.eval() #- (1.0/m)*numpy.dot(H2, numpy.ones((m,m), dtype=numpy.float32))
-        SigmaHat12 = (1.0/(m-1))*numpy.dot(H1bar, H2bar.T)
-        SigmaHat11 = (1.0/(m-1))*numpy.dot(H1bar, H1bar.T)
-        SigmaHat11 = SigmaHat11 + 0.0001*numpy.identity(SigmaHat11.shape[0], dtype=numpy.float32)
-        SigmaHat22 = (1.0/(m-1))*numpy.dot(H2bar, H2bar.T)
-        SigmaHat22 = SigmaHat22 + 0.0001*numpy.identity(SigmaHat22.shape[0], dtype=numpy.float32)
-
-        Tval = numpy.dot(mat_pow(SigmaHat11), numpy.dot(SigmaHat12, mat_pow(SigmaHat22)))
-
-        corr =  numpy.trace(numpy.dot(Tval.T, Tval))**(0.5)
-        return corr, Tval
 
 
 def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
@@ -178,28 +113,26 @@ def test_dcca(learning_rate=0.01, L1_reg=0.0001, L2_reg=0.0001, n_epochs=1000,
 
     # allocate symbolic variables for the data
     index = T.lscalar()  # index to a [mini]batch
-    x1 = T.matrix('x1')  # the data is presented as rasterized images
-    x2 = T.matrix('x2')  # the labels are presented as 1D vector of
-                        # [int] labels
-    h1 = T.matrix('h1')  # the data is presented as rasterized images
-    h2 = T.matrix('h2')  # the labels are presented as 1D vector of
+    x1 = T.matrix('x1')  # image
+    x2 = T.matrix('x2')  # labels
 
     rng = numpy.random.RandomState(1234)
 
     # construct the MLP class
-    net1 = DCCA(
-        rng=rng,
-        input=x1,
-        n_in=28 * 28,
-        n_hidden=300,
-        n_out=8,
+    net1 = MLP(
+        rng = rng,
+        input = x1,
+        n_in = 28*28,
+        n_hidden = 300,
+        n_out = 8
     )
-    net2 = DCCA(
-        rng=rng,
-        input=x2,
-        n_in=10,
-        n_hidden=20,
-        n_out=8,
+
+    net2 = MLP(
+        rng = rng,
+        input = x1,
+        n_in = 10,
+        n_hidden = 20,
+        n_out = 8
     )
 
 

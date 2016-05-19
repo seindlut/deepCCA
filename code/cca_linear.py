@@ -23,11 +23,9 @@ def cca(x_tn,y_tm, reg=0.00000001):
 
     xldivy = lstsq(cxx,cxy)[0]
     yldivx = lstsq(cyy,cyx)[0]
-    #print xldivy
-    #print dot(np.linalg.inv(cxx),cxy)
+
     _,vecs = eig(dot(xldivy,yldivx))
     a_nk = vecs[:,:K]
-    #print normr(vecs.T)
     b_mk = dot(yldivx,a_nk)
 
     u_tk = dot(x_tn,a_nk)
