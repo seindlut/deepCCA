@@ -103,7 +103,7 @@ class dCCA(object):
 
         self.params = self.net1.params + self.net2.params
 
-    def get_cost_updates(self, H1,H1back, H2,H2back, learning_rate=0.01):
+    def get_cost_updates(self, H1,H1back, H2,H2back, learning_rate=0.1, momentum = 1):
 
         m = H1.shape[0]
         H1bar = H1 #- (1.0/m)*T.dot(H1, T.shared(np.ones((m,m))))
@@ -177,12 +177,12 @@ class dCCA(object):
             theano.shared(np.array(gparam_b2.flatten(), dtype=theano.config.floatX), borrow=True) ]
 
         updates1 = [
-            (param, param.eval() + learning_rate * gparam)
+            (param, momentum * param.eval() + learning_rate * gparam)
             for param, gparam in zip(self.net1.lastLayer.params, gparams1)
         ]
 
         updates2 = [
-            (param, param.eval() + learning_rate * gparam)
+            (param, momentum * param.eval() + learning_rate * gparam)
             for param, gparam in zip(self.net2.lastLayer.params, gparams2)
         ]
 
@@ -217,7 +217,7 @@ class CCALayer(HiddenLayer):
         return -1*corr
 
 
-def test_dcca(learning_rate=1, L1_reg=1e-6, L2_reg=1e-6, n_epochs=1000,
+def test_dcca(learning_rate= .2, momentum =1, L1_reg=1e-6, L2_reg=1e-6, n_epochs=1000,
              dataset='mnist.pkl.gz', batch_size=20, n_hidden=500):
     # Loading datasets:
     datasets = load_data(dataset)
@@ -328,7 +328,7 @@ def test_dcca(learning_rate=1, L1_reg=1e-6, L2_reg=1e-6, n_epochs=1000,
         # print 'Net2 cost : ', cc2()
         # theano.printing.pydotprint(cc, outfile="models/dcca/correlation.png", var_with_name_simple=True)
 
-        up = N.get_cost_updates(H1, H1back, H2 , H2back, learning_rate=0.01)
+        up = N.get_cost_updates(H1, H1back, H2 , H2back, learning_rate= learning_rate, momentum = momentum)
         # backprop = theano.function(inputs =[],
         #             outputs = up,
         #             givens ={x1: train_set_x, x2: train_set_y}
@@ -338,7 +338,7 @@ def test_dcca(learning_rate=1, L1_reg=1e-6, L2_reg=1e-6, n_epochs=1000,
         print 'Correlation :', corr
         gparams1 = [T.grad(cost1, param) for param in net1.hiddenLayer.params]
         backupdates1 = [
-            (param, param - learning_rate * gparam)
+            (param, momentum * param - learning_rate * gparam)
             for param, gparam in zip(net1.hiddenLayer.params, gparams1)
         ]
         train_net1 = theano.function(
@@ -349,7 +349,7 @@ def test_dcca(learning_rate=1, L1_reg=1e-6, L2_reg=1e-6, n_epochs=1000,
         )
         gparams2 = [T.grad(cost2, param) for param in net2.hiddenLayer.params]
         backupdates2 = [
-            (param, param - learning_rate * gparam)
+            (param, momentum * param - learning_rate * gparam)
             for param, gparam in zip(net2.hiddenLayer.params, gparams2)
         ]
         train_net2 = theano.function(
