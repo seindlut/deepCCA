@@ -14,6 +14,11 @@ from scipy.linalg import sqrtm
 
 from mlp import HiddenLayer, MLP
 
+
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.style.use('ggplot')
+
 DEBUG = False
 
 def mat_pow(matrix):
@@ -77,7 +82,7 @@ def load_data(dataset):
                                                dtype=theano.config.floatX),
                                  borrow=borrow)
         return shared_x, shared_y
-    train_set = (train_set[0][:100], train_set[1][:100])
+    train_set = (train_set[0][:1000], train_set[1][:1000])
     test_set_x, test_set_y = shared_dataset(test_set)
     valid_set_x, valid_set_y = shared_dataset(valid_set)
     train_set_x, train_set_y = shared_dataset(train_set)
@@ -311,7 +316,7 @@ def test_dcca(learning_rate= .2, momentum =1, L1_reg=1e-6, L2_reg=1e-6, n_epochs
 
     epoch = 0
     done_looping = False
-
+    track = []
     while (epoch < n_epochs) and (not done_looping):
         epoch = epoch + 1
         print 'epoch', epoch,
@@ -335,7 +340,8 @@ def test_dcca(learning_rate= .2, momentum =1, L1_reg=1e-6, L2_reg=1e-6, n_epochs
         #             )
         updates1, updates2, corr = up
 
-        print 'Correlation :', corr
+        print 'correlation :', corr
+        track.append(corr)
         gparams1 = [T.grad(cost1, param) for param in net1.hiddenLayer.params]
         backupdates1 = [
             (param, momentum * param - learning_rate * gparam)
@@ -359,18 +365,21 @@ def test_dcca(learning_rate= .2, momentum =1, L1_reg=1e-6, L2_reg=1e-6, n_epochs
             givens={x1: train_set_x, x2: train_set_y}
         )
 
-        cc, cs1 = train_net1()
-        cc_, cs2 = train_net2()
-        if epoch > 100:
-            break
+        train_net1()
+        train_net2()
+
 
     end_time = time.clock()
-    print(('Optimization complete. Best validation score of %f %% '
-           'obtained at iteration %i, with test performance %f %%') %
-          (best_validation_loss * 100., best_iter + 1, test_score * 100.))
+
     print >> sys.stderr, ('The code for file ' +
                           os.path.split(__file__)[1] +
                           ' ran for %.2fm' % ((end_time - start_time) / 60.))
+    plt.figure(figsize=(6,4))
+    plt.plot(range(len(track)-1), track[1:], lw=2)
+    plt.xlabel("epoch")
+    plt.ylabel("correlation")
+    plt.savefig('models/dcca/corr.png')
+    plt.show()
 
 if __name__ == '__main__':
     test_dcca()
