@@ -19,6 +19,9 @@ Datasets:
 
 ## Tutorials:
 dA.py     : denoising autoencoder
+
 sdAE.py   : Stacking denoising AE
+
 mlp.py    : standard Multi-layer perceptron
+
 my_sda.py : Modified deepCCA (that actually works!)
