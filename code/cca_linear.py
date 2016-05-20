@@ -5,7 +5,7 @@ import numpy as np
 import leveldb
 import itertools
 import random
-
+import caffe
 def cca(x_tn,y_tm, reg=0.00000001):
     # Centering
     x_tn = x_tn-x_tn.mean(axis=0)
@@ -34,7 +34,7 @@ def cca(x_tn,y_tm, reg=0.00000001):
     u_tk = dot(x_tn,a_nk)
     v_tk = dot(y_tm,b_mk)
 
-    return a_nk,b_mk,u_tk,v_tk
+    return np.real(a_nk),np.real(b_mk),np.real(u_tk),np.real(v_tk)
 
 def normr(a):
     return a/np.sqrt((a**2).sum(axis=1))[:,None]
@@ -135,59 +135,36 @@ def save_pairs():
 
 
 def write_leveldbs(X,Y, SIM, name=''):
-
-    db = leveldb.DB('../'+name+'_p1', create_if_missing=True, error_if_exists=True, write_buffer_size=268435456)
-    wb = db.write_batch()
+    leveldb.DestroyDB('../data/'+name)
+    db = leveldb.LevelDB('../data/'+name, create_if_missing=True, error_if_exists=True, write_buffer_size=268435456)
+    wb = leveldb.WriteBatch()
     num_items = X.shape[0]
+    print '# samples : ', num_items
     X = X.reshape(num_items, 28, 28)
+    Y = X.reshape(num_items, 28, 28)
     count = 0
     for i in range(num_items):
-        image = X[i,:,:]
+        image1 = np.expand_dims(X[i,:,:], axis=0)
+        image2 = np.expand_dims(Y[i,:,:], axis=0)
+        image = np.vstack([image1, image2])
         sim = SIM[i]
         # Load image into datum object
         datum = caffe.io.array_to_datum(image, sim)
-        wb.put('%08d_%s' % (count, file), datum.SerializeToString())
+        wb.Put('%08d_%s' % (count, file), datum.SerializeToString())
         count = count + 1
         if count % 1000 == 0:
             # Write batch of images to database
-            wb.write()
+            db.Write(wb)
             del wb
-            wb = db.write_batch()
+            wb = leveldb.WriteBatch()
             print 'Processed %i images.' % count
 
     if count % 1000 != 0:
         # Write last batch of images
-        wb.write()
+        db.Write(wb)
         print 'Processed a total of %i images.' % count
     else:
         print 'Processed a total of %i images.' % count
-
-    db = leveldb.DB('../'+name+'_p2', create_if_missing=True, error_if_exists=True, write_buffer_size=268435456)
-    wb = db.write_batch()
-    num_items = Y.shape[0]
-    Y = Y.reshape(num_items, 28, 28)
-    count = 0
-    for i in range(num_items):
-        image = Y[i,:,:]
-        sim = SIM[i]
-        # Load image into datum object
-        datum = caffe.io.array_to_datum(image, sim)
-        wb.put('%08d_%s' % (count, file), datum.SerializeToString())
-        count = count + 1
-        if count % 1000 == 0:
-            # Write batch of images to database
-            wb.write()
-            del wb
-            wb = db.write_batch()
-            print 'Processed %i images.' % count
-
-    if count % 1000 != 0:
-        # Write last batch of images
-        wb.write()
-        print 'Processed a total of %i images.' % count
-    else:
-        print 'Processed a total of %i images.' % count
-
 
 def test_cca():
     # inputs :
@@ -219,11 +196,16 @@ def test_cca():
     X = np.vstack([X_sim, X_dissim])
     print 'X:',X.shape
     Y = np.vstack([Y_sim, Y_dissim])
-    SIM = np.hstack([np.ones(len(X_sim)), np.zeros(len(X_dissim))])
-    I  = np.random.shuffle(range(len(X)))
+    SIM = np.hstack([np.ones(len(X_sim),dtype=np.int), np.zeros(len(X_dissim),dtype=np.int)])
+    pair_labels = np.vstack([train_sim_labels, train_dissim_labels])
+    I = np.arange(X.shape[0])
+    np.random.shuffle(I)
     X = X[I,:]
     Y = Y[I,:]
     SIM = SIM[I]
+    pair_labels = pair_labels[I,:]
+    np.savetxt('../data/listing_train.txt', pair_labels, fmt='%d')
+    np.savetxt('../data/sim_train.txt', SIM, fmt='%d')
     write_leveldbs(X,Y, SIM, name='train')
 
     # ---------------------------------------------- Test
@@ -235,11 +217,16 @@ def test_cca():
     # Merge and shuffle:
     X = np.vstack([X_sim, X_dissim])
     Y = np.vstack([Y_sim, Y_dissim])
-    SIM = np.hstack([np.ones(len(X_sim)), np.zeros(len(X_dissim))])
-    I  = np.random.shuffle(range(len(X)))
+    SIM = np.hstack([np.ones(len(X_sim),dtype=np.int), np.zeros(len(X_dissim),dtype=np.int)])
+    pair_labels = np.vstack([test_sim_labels, test_dissim_labels])
+    I = np.arange(X.shape[0])
+    np.random.shuffle(I)
     X = X[I,:]
     Y = Y[I,:]
     SIM = SIM[I]
+    pair_labels = pair_labels[I,:]
+    np.savetxt('../data/listing_test.txt', pair_labels, fmt='%d')
+    np.savetxt('../data/sim_test.txt', SIM, fmt='%d')
     write_leveldbs(X,Y, SIM, name='test')
 
 
