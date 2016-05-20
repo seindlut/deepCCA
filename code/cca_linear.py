@@ -217,9 +217,10 @@ def test_cca():
 
     # Merge and shuffle:
     X = np.vstack([X_sim, X_dissim])
+    print 'X:',X.shape
     Y = np.vstack([Y_sim, Y_dissim])
     SIM = np.hstack([np.ones(len(X_sim)), np.zeros(len(X_dissim))])
-    I  = np.random.shuffle(len(X))
+    I  = np.random.shuffle(range(len(X)))
     X = X[I,:]
     Y = Y[I,:]
     SIM = SIM[I]
@@ -235,7 +236,7 @@ def test_cca():
     X = np.vstack([X_sim, X_dissim])
     Y = np.vstack([Y_sim, Y_dissim])
     SIM = np.hstack([np.ones(len(X_sim)), np.zeros(len(X_dissim))])
-    I  = np.random.shuffle(len(X))
+    I  = np.random.shuffle(range(len(X)))
     X = X[I,:]
     Y = Y[I,:]
     SIM = SIM[I]
