@@ -2,7 +2,7 @@ from __future__ import division
 from numpy.linalg import lstsq,eig
 from numpy import cov,dot,arange,c_
 import numpy as np
-import plyvel
+import leveldb
 import itertools
 import random
 
@@ -136,7 +136,7 @@ def save_pairs():
 
 def write_leveldbs(X,Y, SIM, name=''):
 
-    db = plyvel.DB('../'+name+'_p1', create_if_missing=True, error_if_exists=True, write_buffer_size=268435456)
+    db = leveldb.DB('../'+name+'_p1', create_if_missing=True, error_if_exists=True, write_buffer_size=268435456)
     wb = db.write_batch()
     num_items = X.shape[0]
     X = X.reshape(num_items, 28, 28)
@@ -162,7 +162,7 @@ def write_leveldbs(X,Y, SIM, name=''):
     else:
         print 'Processed a total of %i images.' % count
 
-    db = plyvel.DB('../'+name+'_p2', create_if_missing=True, error_if_exists=True, write_buffer_size=268435456)
+    db = leveldb.DB('../'+name+'_p2', create_if_missing=True, error_if_exists=True, write_buffer_size=268435456)
     wb = db.write_batch()
     num_items = Y.shape[0]
     Y = Y.reshape(num_items, 28, 28)
