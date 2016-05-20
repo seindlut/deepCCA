@@ -14,7 +14,7 @@ Datasets:
 
 - Mnist same digit
 
-  Built with ```python build_mnits_pairs.py ```
+  Built in cca_linear.py
 
 
 ## Tutorials:
