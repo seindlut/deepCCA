@@ -134,23 +134,18 @@ def save_pairs():
     print '... done'
 
 
-def write_leveldbs(X,Y, name=''):
+def write_leveldbs(X,Y, SIM, name=''):
 
-    db = plyvel.DB('../'+name, create_if_missing=True, error_if_exists=True, write_buffer_size=268435456)
+    db = plyvel.DB('../'+name+'_p1', create_if_missing=True, error_if_exists=True, write_buffer_size=268435456)
     wb = db.write_batch()
-    num_items = images.shape[0]
+    num_items = X.shape[0]
+    X = X.reshape(num_items, 28, 28)
     count = 0
-    sliced_labels = []
-    for _ in range(num_items):
-        i = np.random.randint(num_items)
-        j = np.random.randint(num_items)
-        sliced_labels.append(labels[i])
-        sim = (1 if labels[i]==labels[j] else 0)
-        image = images[[i,j],:,:]
-
+    for i in range(num_items):
+        image = X[i,:,:]
+        sim = SIM[i]
         # Load image into datum object
         datum = caffe.io.array_to_datum(image, sim)
-
         wb.put('%08d_%s' % (count, file), datum.SerializeToString())
         count = count + 1
         if count % 1000 == 0:
@@ -166,8 +161,32 @@ def write_leveldbs(X,Y, name=''):
         print 'Processed a total of %i images.' % count
     else:
         print 'Processed a total of %i images.' % count
-    print 'Saving the labels of the first image in each pair:'
-    np.savetxt('../data/labels_mnist_'+dataset+'.txt', sliced_labels, fmt='%d')
+
+    db = plyvel.DB('../'+name+'_p2', create_if_missing=True, error_if_exists=True, write_buffer_size=268435456)
+    wb = db.write_batch()
+    num_items = Y.shape[0]
+    Y = Y.reshape(num_items, 28, 28)
+    count = 0
+    for i in range(num_items):
+        image = Y[i,:,:]
+        sim = SIM[i]
+        # Load image into datum object
+        datum = caffe.io.array_to_datum(image, sim)
+        wb.put('%08d_%s' % (count, file), datum.SerializeToString())
+        count = count + 1
+        if count % 1000 == 0:
+            # Write batch of images to database
+            wb.write()
+            del wb
+            wb = db.write_batch()
+            print 'Processed %i images.' % count
+
+    if count % 1000 != 0:
+        # Write last batch of images
+        wb.write()
+        print 'Processed a total of %i images.' % count
+    else:
+        print 'Processed a total of %i images.' % count
 
 
 def test_cca():
@@ -192,13 +211,36 @@ def test_cca():
     a,b,X_sim,Y_sim = cca(train_x_sim,train_y_sim)
     print 'a: ', a.shape
     print 'X: ', X_sim.shape
+    # ---------------------------------------------- Train
     X_dissim = np.dot(train_x_dissim,a)
     Y_dissim = np.dot(train_y_dissim,b)
 
     # Merge and shuffle:
-    I  = np.random.shuffle(range(len(X_sim+X_dissim)))
-    print len(I)
-    X_sim = X_sim[I,:]
+    X = np.vstack([X_sim, X_dissim])
+    Y = np.vstack([Y_sim, Y_dissim])
+    SIM = np.hstack([np.ones(len(X_sim)), np.zeros(len(X_dissim))])
+    I  = np.random.shuffle(len(X))
+    X = X[I,:]
+    Y = Y[I,:]
+    SIM = SIM[I]
+    write_leveldbs(X,Y, SIM, name='train')
+
+    # ---------------------------------------------- Test
+    X_sim = np.dot(test_x_sim,a)
+    Y_sim = np.dot(test_y_sim,b)
+    X_dissim = np.dot(test_x_dissim,a)
+    Y_dissim = np.dot(test_y_dissim,b)
+
+    # Merge and shuffle:
+    X = np.vstack([X_sim, X_dissim])
+    Y = np.vstack([Y_sim, Y_dissim])
+    SIM = np.hstack([np.ones(len(X_sim)), np.zeros(len(X_dissim))])
+    I  = np.random.shuffle(len(X))
+    X = X[I,:]
+    Y = Y[I,:]
+    SIM = SIM[I]
+    write_leveldbs(X,Y, SIM, name='test')
+
 
 if __name__ == "__main__":
     # save_pairs()
