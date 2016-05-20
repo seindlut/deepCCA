@@ -139,9 +139,7 @@ class dCCA(object):
         if DEBUG:
             print 'SVD:',
             print np.allclose(Tval, np.dot(U, np.dot(D, V.T))), np.linalg.norm(Tval - np.dot(U, np.dot(D, V.T)))
-
-        UVT = np.dot(U, V.T)
-        UDUT = np.dot(U, np.dot(D, U.T))
+batch_size
 
         Delta12 = np.dot(SigmaHat11_2, np.dot(UVT, SigmaHat22_2))
         Delta11 = -.5* np.dot(SigmaHat11_2, np.dot(UDUT, SigmaHat11_2))
