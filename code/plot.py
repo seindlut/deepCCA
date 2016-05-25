@@ -15,40 +15,6 @@ SET = test_set_x.get_value(borrow=True)
 
 
 
-''' Uncorrupted '''
-
-with open('models/dae/f30_unc_log_train.pkl', 'rb') as input:
-    mse_log = cPickle.load(input)
-
-with open('models/dae/f30_unc_log_train.pkl', 'rb') as input:
-    mse_log_test = cPickle.load(input)
-
-plt.figure(figsize=(6,4))
-plt.plot(range(len(mse_log)), mse_log,label='train')
-plt.plot(range(len(mse_log_test)), mse_log_test,label='test')
-plt.legend()
-plt.xlabel('Epoch')
-plt.ylabel('MSE reconstruction')
-plt.title('Deep Autoencoder (1 hidden layer)')
-plt.savefig('models/dae/MSE_dae.png',bbox_inches='tight')
-print 'final test: ',mse_log_test[-1]
-print 'final train: ',mse_log[-1]
-
-'''  Corruption 0.3 '''
-
-with open('models/dae/dAE_mnist_corr30_log.pkl', 'rb') as input:
-    mse_log = cPickle.load(input)
-
-plt.figure(figsize=(6,4))
-plt.plot(range(len(mse_log)), mse_log)
-plt.xlabel('Epoch')
-plt.ylabel('MSE reconstruction')
-plt.title('Deep Denoising Autoencoder (1 hidden layer)')
-plt.savefig('models/dae/MSE_dae_corr30.png',bbox_inches='tight')
-print 'final train: ',mse_log[-1]
-
-
-
 with open('models/dae/f30_unc_test0.pkl', 'rb') as input:
     z = cPickle.load(input)
 z = z.reshape((28,28))*255
