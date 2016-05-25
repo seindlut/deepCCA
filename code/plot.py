@@ -15,7 +15,7 @@ SET = test_set_x.get_value(borrow=True)
 
 
 
-with open('models/dae/f30_unc_test0.pkl', 'rb') as input:
+with open('models/dae/f30_corr30_test0.pkl', 'rb') as input:
     z = cPickle.load(input)
 z = z.reshape((28,28))*255
 x = SET[0,:].reshape((28,28))*255
@@ -33,7 +33,7 @@ ax2.axis('off')
 ax3.imshow(diff)
 ax3.set_title('Difference')
 ax3.axis('off')
-plt.savefig('models/dae/illust.png',bbox_inches='tight')
+plt.savefig('models/dae/illust_corr30.png',bbox_inches='tight')
 
 
 
